@@ -19,4 +19,8 @@ $secrets = [
 $navM2m = new NavM2m('./09teszt.xml', $secrets, 'sandbox');
 
 $token = $navM2m->createToken();
-echo 'Token: ' . $token;
+var_dump($token);
+
+// user activation - should be done only once per user, nonce is coming from the user
+$newToken = $navM2m->activateUser($_ENV['NAV2M2M__USER__NONCE'], $token['accessToken'], $_ENV['NAV2M2M_SIGNING_KEY_FIRST_PART']);
+var_dump($newToken);

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Rrd108\NavM2m;
 
 use Ramsey\Uuid\Uuid;
@@ -11,17 +13,18 @@ class NavM2m
     private $API_URL;
     private $file;
     private $xsdFile = __DIR__ . '/schema.xsd';
-
+    private $sandboxApiUrl = 'https://m2m-dev.nav.gov.hu/rest-api/1.1/';
+    private $productionApiUrl = 'https://???api.nav.gov.hu/m2m/rest-api/';
     private $endpoints = [
         'createToken' => 'NavM2mCommon/tokenService/Token',
+        'userNonce' => 'NavM2mCommon/userregistrationService/Nonce',
+        'userActivation' => 'NavM2mCommon/userregistrationService/Activation',
     ];
+    public $logger = true;
+    private $log = [];
 
     public function __construct(string $file, array $secrets, string $mode = 'sandbox')
     {
-        $this->secrets = $secrets;
-        $this->mode = $mode;
-        $this->API_URL = $mode == 'sandbox' ? 'https://m2m-dev.nav.gov.hu/rest-api/1.1/' : 'https://???api.nav.gov.hu/m2m/rest-api/';
-
         if (!file_exists($file)) {
             throw new \Exception("A {$file} fájl nem található!");
         }
@@ -29,6 +32,24 @@ class NavM2m
 
         if (!$this->isValidXML($file, $this->xsdFile)) {
             throw new \Exception("A {$file} fájl nem valid XML!");
+        }
+
+        if (!$secrets['clientId'] || !$secrets['clientSecret'] || !$secrets['username'] || !$secrets['password']) {
+            throw new \Exception("Client ID, client secret, username and password are required");
+        }
+
+        $this->secrets = $secrets;
+        $this->mode = $mode;
+        $this->API_URL = $mode == 'sandbox' ? $this->sandboxApiUrl : $this->productionApiUrl;
+
+        $this->log('NavM2m initialized in ' . $this->mode . ' mode');
+    }
+
+    private function log(string $message)
+    {
+        if ($this->logger) {
+            echo '  👉 ' . $message . "\n";
+            //$this->log[] = $message;
         }
     }
 
@@ -48,7 +69,15 @@ class NavM2m
         return $xmlContent;
     }
 
-    public function createToken()
+    /**
+     * @return array{
+     *     resultMessage: ?string,
+     *     accessToken: string,
+     *     expires: int,
+     *     resultCode: string
+     * }
+     */
+    public function createToken(): array
     {
         $endpoint = $this->API_URL . $this->endpoints['createToken'];
 
@@ -59,25 +88,44 @@ class NavM2m
             'password' => $this->secrets['password']
         ];
 
-        return $this->post($endpoint, $data);
+        return $this->post(
+            endpoint: $endpoint,
+            data: $data,
+            messageId: $this->createMessageId()
+        );
     }
 
-    private function post($endpoint, $data)
+    private function createMessageId()
     {
-        $messageId = Uuid::uuid4()->toString();
+        return Uuid::uuid4()->toString();
+    }
+
+    /**
+     * @return array{
+     * }
+     */
+    private function post(string $endpoint, array $data, string $messageId, string $accessToken = null)
+    {
+        $this->log('Sending POST request to ' . $endpoint);
         $requestBody = [
             'requestData' => $data,
         ];
+
+        $headers = [
+            'Accept: application/json',
+            'Content-Type: application/json',
+            'messageId: ' . $messageId
+        ];
+
+        if ($accessToken) {
+            $headers[] = 'Authorization: Bearer ' . $accessToken;
+        }
 
         $options = [
             CURLOPT_URL => $endpoint,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => json_encode($requestBody),
-            CURLOPT_HTTPHEADER => [
-                'Accept: application/json',
-                'Content-Type: application/json',
-                'messageId: ' . $messageId
-            ],
+            CURLOPT_HTTPHEADER => $headers,
             CURLOPT_RETURNTRANSFER => true
         ];
 
@@ -96,74 +144,59 @@ class NavM2m
             throw new \Exception("HTTP error: " . $httpCode . " Response: " . $response);
         }
 
-        return $response;
+        $this->log('Received response from ' . $endpoint . ': ' . $response);
+        return json_decode($response, true);
     }
-}
 
-    /*
-    public function generateHash()
+    public function activateUser(string $nonce, string $accessToken, string $signatureKeyFirstPart)
     {
-        $messageId = Uuid::uuid4()->toString();
-        $timestamp = gmdate('YmdHis');
-        $xmlContent = $this->getXmlContent();
-        return hash('sha256', $xmlContent);
-    }
-}
+        $this->log('Activating user with nonce: ' . $nonce);
+        $endpoint = $this->API_URL . $this->endpoints['userNonce'];
 
+        $data = ['nonce' => $nonce];
 
+        $response = $this->post(
+            endpoint: $endpoint,
+            data: $data,
+            messageId: $this->createMessageId(),
+            accessToken: $accessToken
+        );
+        $this->log('Received response from ' . $endpoint . ': ' . $response);
 
+        $signatureKeySecondPart = $response['signatureKeySecondPart'];
 
-function redeemNonce($nonce)
-{
-    $endpoint = API_URL . 'NavM2mCommon/userregistrationService/Nonce';
+        $this->log('Signature key second part received: ' . $signatureKeySecondPart);
 
-    $data = [
-        'nonce' => $nonce
-    ];
+        $signatureKey = $signatureKeyFirstPart . $signatureKeySecondPart;
+        $this->log('Signature key: ' . $signatureKey);
 
-    return post($endpoint, $data);
-}
+        $endpoint = $this->API_URL . $this->endpoints['userActivation'];
+        $messageId = $this->createMessageId();
+        $data = ['signature' => $this->generateSignature(
+            messageId: $messageId,
+            data: '',
+            signatureKey: $signatureKey
+        )];
+        $response = $this->post(
+            endpoint: $endpoint,
+            data: $data,
+            messageId: $messageId,
+            accessToken: $accessToken
+        );
+        $this->log('Received response from ' . $endpoint . ': ' . $response);
+        $this->log('Successfull user activation');
 
-
-/*
-function uploadDocument($xmlFile)
-{
-    // Fájlfeltöltési végpont URL-je
-    $uploadUrl = API_URL . '/file/upload';
-    $accessToken = getToken();
-
-    $xmlContent = getXmlContent($xmlFile);
-    $hash = generateHash($xmlContent);
-
-    // Az HTTP kérés adatai
-    $headers = [
-        'Content-Type: application/xml',
-        'Authorization: Bearer ' . $accessToken
-    ];
-    $data = [
-        'file' => new \CURLFile($xmlFile, 'application/xml'),
-        'hash' => $hash
-    ];
-
-    // CURL inicializálása
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $uploadUrl);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-    // Kérés elküldése
-    $response = curl_exec($ch);
-
-    // Hibakezelés
-    if (curl_errno($ch)) {
-        echo "Hiba: " . curl_error($ch);
-    } else {
-        echo "Fájlfeltöltés válasza: $response";
+        $token = $this->createToken();
+        $this->log('New token: ' . $token);
+        return $token;
     }
 
-    // CURL bezárása
-    curl_close($ch);
+    private function generateSignature(string $messageId, $data, string $signatureKey)
+    {
+        $timestamp = date("YmdHis", time());
+        $signatureData = $messageId . $timestamp . $data . $signatureKey;
+        $this->log('Signature data: ' . $signatureData);
+        $signatureHash = hash('sha256', $signatureData, true);
+        return base64_encode($signatureHash);
+    }
 }
-*/
