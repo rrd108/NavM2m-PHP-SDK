@@ -1,0 +1,20 @@
+{
+  "name": "rrd108/nav-m2m-php",
+  "type": "library",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Rrd108\\NavM2m\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "rrd108",
+      "email": "rrd@webmania.cc"
+    }
+  ],
+  "require": {
+    "ramsey/uuid": "^4.7",
+    "vlucas/phpdotenv": "^5.6"
+  }
+}

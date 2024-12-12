@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <nyomtatvanyok xmlns="http://www.apeh.hu/abev/nyomtatvanyok/2005/01">
+  <abev>
+    <hibakszama>0</hibakszama>
+    <hash>4546d9d2498f9f00d5ad3f759b9d504f938c3eb3</hash>
+    <programverzio>v.3.35.0</programverzio>
+  </abev>
+  <nyomtatvany>
+    <nyomtatvanyinformacio>
+      <nyomtatvanyazonosito>09teszt</nyomtatvanyazonosito>
+      <nyomtatvanyverzio>2.0</nyomtatvanyverzio>
+      <adozo>
+        <nev>LÁL KFT.</nev>
+        <adoszam>12714092214</adoszam>
+      </adozo>
+    </nyomtatvanyinformacio>
+    <mezok>
+      <mezo eazon="0A0001B001A">12714092214</mezo>
+      <mezo eazon="0A0001B003A">LÁL KFT.</mezo>
+    </mezok>
+  </nyomtatvany>
+</nyomtatvanyok>
