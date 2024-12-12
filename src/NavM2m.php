@@ -107,9 +107,7 @@ class NavM2m
     private function post(string $endpoint, array $data, string $messageId, string $accessToken = null)
     {
         $this->log('Sending POST request to ' . $endpoint);
-        $requestBody = [
-            'requestData' => $data,
-        ];
+        $requestBody = ['requestData' => $data];
 
         $headers = [
             'Accept: application/json',
@@ -120,6 +118,9 @@ class NavM2m
         if ($accessToken) {
             $headers[] = 'Authorization: Bearer ' . $accessToken;
         }
+
+        $this->log('Headers: ' . json_encode($headers));
+        $this->log('Request body: ' . json_encode($requestBody));
 
         $options = [
             CURLOPT_URL => $endpoint,
@@ -161,13 +162,13 @@ class NavM2m
             messageId: $this->createMessageId(),
             accessToken: $accessToken
         );
-        $this->log('Received response from ' . $endpoint . ': ' . $response);
 
-        $signatureKeySecondPart = $response['signatureKeySecondPart'];
+        if (!isset($response['signatureKeySecondPart'])) {
+            throw new \Exception('Signature key second part not received');
+        }
+        $this->log('Signature key second part received: ' . $response['signatureKeySecondPart']);
 
-        $this->log('Signature key second part received: ' . $signatureKeySecondPart);
-
-        $signatureKey = $signatureKeyFirstPart . $signatureKeySecondPart;
+        $signatureKey = $signatureKeyFirstPart . $response['signatureKeySecondPart'];
         $this->log('Signature key: ' . $signatureKey);
 
         $endpoint = $this->API_URL . $this->endpoints['userActivation'];
@@ -183,7 +184,7 @@ class NavM2m
             messageId: $messageId,
             accessToken: $accessToken
         );
-        $this->log('Received response from ' . $endpoint . ': ' . $response);
+        $this->log('Received response from ' . $endpoint . ': ' . json_encode($response));
         $this->log('Successfull user activation');
 
         $token = $this->createToken();
