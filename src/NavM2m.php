@@ -14,7 +14,7 @@ class NavM2m
     private $file;
     private $xsdFile = __DIR__ . '/schema.xsd';
     private $sandboxApiUrl = 'https://m2m-dev.nav.gov.hu/rest-api/1.1/';
-    private $productionApiUrl = 'https://???api.nav.gov.hu/m2m/rest-api/';
+    private $productionApiUrl = 'https://m2m.nav.gov.hu/rest-api/1.1/';
     private $endpoints = [
         'createToken' => 'NavM2mCommon/tokenService/Token',
         'userNonce' => 'NavM2mCommon/userregistrationService/Nonce',
@@ -168,12 +168,12 @@ class NavM2m
         return json_decode($response, true);
     }
 
-    public function activateUser(string $nonce, string $accessToken, string $signatureKeyFirstPart)
+    public function activateUser(array $user, string $accessToken)
     {
-        $this->log('Activating user with nonce: ' . $nonce);
+        $this->log('Activating user with nonce: ' . $user['nonce']);
         $endpoint = $this->API_URL . $this->endpoints['userNonce'];
 
-        $data = ['nonce' => $nonce];
+        $data = ['nonce' => $user['nonce']];
 
         $response = $this->post(
             endpoint: $endpoint,
@@ -187,7 +187,7 @@ class NavM2m
         }
         $this->log('Signature key second part received: ' . $response['signatureKeySecondPart']);
 
-        $signatureKey = $signatureKeyFirstPart . $response['signatureKeySecondPart'];
+        $signatureKey = $user['signingKeyFirstPart'] . $response['signatureKeySecondPart'];
         $this->log('Signature key: ' . $signatureKey);
 
         $endpoint = $this->API_URL . $this->endpoints['userActivation'];
@@ -206,8 +206,8 @@ class NavM2m
         $this->log('Received response from ' . $endpoint . ': ' . json_encode($response));
         $this->log('Successfull user activation');
 
-        $token = $this->createToken();
-        $this->log('New token: ' . $token);
+        $token = $this->createToken($user);
+        $this->log('New token: ' . json_encode($token));
         return $token;
     }
 

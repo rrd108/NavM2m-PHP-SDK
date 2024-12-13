@@ -2,7 +2,7 @@
   "name": "rrd108/nav-m2m-php",
   "type": "library",
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "autoload": {
     "psr-4": {
       "Rrd108\\NavM2m\\": "src/"
