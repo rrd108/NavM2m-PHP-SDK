@@ -388,11 +388,10 @@ class NavM2m
 
     private function generateSignature(string $messageId, $data, string $signatureKey)
     {
-        $timestamp = date("YmdHis", time());
+        $timestamp = gmdate('YmdHis', time());
         $signatureData = $messageId . $timestamp . $data . $signatureKey;
         $this->log('  NavM2m:generateSignature Signature data: ' . $signatureData);
-        $signatureHash = hash('sha256', $signatureData, true);
-        return base64_encode($signatureHash);
+        return strtoupper(hash('sha256', $signatureData));
     }
 
     private function log(string $message)
