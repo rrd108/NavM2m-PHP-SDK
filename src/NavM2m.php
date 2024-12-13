@@ -18,7 +18,7 @@ class NavM2m
         'createToken' => 'NavM2mCommon/tokenService/Token',
         'userNonce' => 'NavM2mCommon/userregistrationService/Nonce',
         'userActivation' => 'NavM2mCommon/userregistrationService/Activation',
-        'addFile' => 'NavM2mDocument/filestoreUploadService/File',
+        'addFile' => 'NavM2mCommon/filestoreUploadService/File',
         'getFileStatus' => 'NavM2mDocument/filestoreDownloadService/File',
         'createDocument' => 'NavM2mDocument/documentService/Document',
         'updateDocument' => 'NavM2mDocument/documentService/Document',
