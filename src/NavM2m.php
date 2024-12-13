@@ -8,7 +8,7 @@ use Ramsey\Uuid\Uuid;
 
 class NavM2m
 {
-    private $secrets;
+    private $client;
     private $mode;
     private $API_URL;
     private $file;
@@ -23,7 +23,7 @@ class NavM2m
     public $logger = true;
     private $log = [];
 
-    public function __construct(string $file, array $secrets, string $mode = 'sandbox')
+    public function __construct(string $file, string $mode = 'sandbox', array $client)
     {
         if (!file_exists($file)) {
             throw new \Exception("A {$file} fájl nem található!");
@@ -34,15 +34,34 @@ class NavM2m
             throw new \Exception("A {$file} fájl nem valid XML!");
         }
 
-        if (!$secrets['clientId'] || !$secrets['clientSecret'] || !$secrets['username'] || !$secrets['password']) {
+        if (!$client['id'] || !$client['secret']) {
             throw new \Exception("Client ID, client secret, username and password are required");
         }
 
-        $this->secrets = $secrets;
+        $this->client = $client;
         $this->mode = $mode;
-        $this->API_URL = $mode == 'sandbox' ? $this->sandboxApiUrl : $this->productionApiUrl;
+        $this->API_URL = $mode == 'production' ? $this->productionApiUrl : $this->sandboxApiUrl;
 
         $this->log('NavM2m initialized in ' . $this->mode . ' mode');
+    }
+
+    /**
+     * @return array{
+     *     id: string,
+     *     password: string,
+     *     signingKeyFirstPart: string,
+     *     nonce: string
+     * }
+     */
+    public function getUser(string $temporaryUserApiKey)
+    {
+        $data = explode('-', $temporaryUserApiKey);
+        return [
+            'name' => $data[0],
+            'password' => $data[1],
+            'signingKeyFirstPart' => $data[2],
+            'nonce' => $data[3],
+        ];
     }
 
     private function log(string $message)
@@ -77,15 +96,15 @@ class NavM2m
      *     resultCode: string
      * }
      */
-    public function createToken(): array
+    public function createToken(array $user): array
     {
         $endpoint = $this->API_URL . $this->endpoints['createToken'];
 
         $data = [
-            'clientId' => $this->secrets['clientId'],
-            'clientSecret' => $this->secrets['clientSecret'],
-            'username' => $this->secrets['username'],
-            'password' => $this->secrets['password']
+            'clientId' => $this->client['id'],
+            'clientSecret' => $this->client['secret'],
+            'username' => $user['name'],
+            'password' => $user['password']
         ];
 
         return $this->post(
