@@ -36,7 +36,7 @@ class NavM2m
         $this->mode = $mode;
         $this->API_URL = $mode == 'production' ? $this->productionApiUrl : $this->sandboxApiUrl;
 
-        $this->log('NavM2m initialized in ' . $this->mode . ' mode');
+        $this->log('NavM2m:constructor initialized in ' . $this->mode . ' mode');
     }
 
     /**
@@ -49,6 +49,7 @@ class NavM2m
      */
     public function getInactiveUser(string $temporaryUserApiKey)
     {
+        $this->log('NavM2m:getInactiveUser Getting inactive user with temporary user API key: ' . $temporaryUserApiKey);
         $data = explode('-', $temporaryUserApiKey);
         return [
             'name' => $data[0],
@@ -100,7 +101,7 @@ class NavM2m
             throw new \Exception("Invalid request type: " . $type);
         }
 
-        $this->log("Sending {$type} request to {$endpoint}");
+        $this->log("  NavM2m:sendRequest Sending {$type} request to {$endpoint}");
 
         $headers = [
             'Accept: application/json',
@@ -118,8 +119,8 @@ class NavM2m
 
         $requestBody = json_encode(['requestData' => $data]);
 
-        $this->log('Headers: ' . json_encode($headers));
-        $this->log('Request body: ' . json_encode($requestBody));
+        $this->log('  NavM2m:sendRequest Headers: ' . json_encode($headers));
+        $this->log('  NavM2m:sendRequest Request body: ' . json_encode($requestBody));
 
         $options = [
             CURLOPT_URL => $endpoint,
@@ -144,7 +145,7 @@ class NavM2m
             throw new \Exception("HTTP error: " . $httpCode . " Response: " . $response);
         }
 
-        $this->log("Received {$type} response from {$endpoint}: " . $response);
+        $this->log("  NavM2m:sendRequest Received {$type} response from {$endpoint}: " . $response);
         return json_decode($response, true);
     }
 
@@ -154,7 +155,7 @@ class NavM2m
      */
     private function get(string $endpoint, string $messageId, string $accessToken = null)
     {
-        $this->log('Sending GET request to ' . $endpoint);
+        $this->log('  NavM2m:get Sending GET request to ' . $endpoint);
 
         $headers = [
             'Accept: application/json',
@@ -163,7 +164,7 @@ class NavM2m
             'messageId: ' . $messageId
         ];
 
-        $this->log('Headers: ' . json_encode($headers));
+        $this->log('  NavM2m:get Headers: ' . json_encode($headers));
 
         $options = [
             CURLOPT_URL => $endpoint,
@@ -186,7 +187,7 @@ class NavM2m
             throw new \Exception("HTTP error: " . $httpCode . " Response: " . $response);
         }
 
-        $this->log('Received GET response from ' . $endpoint . ': ' . $response);
+        $this->log('  NavM2m:get Received GET response from ' . $endpoint . ': ' . $response);
         return json_decode($response, true);
     }
 
@@ -203,7 +204,7 @@ class NavM2m
      */
     public function activateUser(array $user, string $accessToken)
     {
-        $this->log('Activating user with nonce: ' . $user['nonce']);
+        $this->log('NavM2m:activateUser Activating user with nonce: ' . $user['nonce']);
         $endpoint = $this->API_URL . $this->endpoints['userNonce'];
 
         $data = ['nonce' => $user['nonce']];
@@ -219,10 +220,10 @@ class NavM2m
         if (!isset($response['signatureKeySecondPart'])) {
             throw new \Exception('Signature key second part not received');
         }
-        $this->log('Signature key second part received: ' . $response['signatureKeySecondPart']);
+        $this->log('NavM2m:activateUser Signature key second part received: ' . $response['signatureKeySecondPart']);
 
         $signatureKey = $user['signingKeyFirstPart'] . $response['signatureKeySecondPart'];
-        $this->log('Signature key: ' . $signatureKey);
+        $this->log('NavM2m:activateUser Signature key: ' . $signatureKey);
 
         $endpoint = $this->API_URL . $this->endpoints['userActivation'];
         $messageId = $this->createMessageId();
@@ -238,11 +239,11 @@ class NavM2m
             messageId: $messageId,
             accessToken: $accessToken
         );
-        $this->log('Received response from ' . $endpoint . ': ' . json_encode($response));
-        $this->log('Successfull user activation');
+        $this->log('NavM2m:activateUser Received response from ' . $endpoint . ': ' . json_encode($response));
+        $this->log('NavM2m:activateUser Successfull user activation');
 
         $token = $this->createToken($user);
-        $this->log('New token: ' . json_encode($token));
+        $this->log('NavM2m:activateUser New token: ' . json_encode($token));
         return ['token' => $token, 'signatureKey' => $signatureKey];
     }
 
@@ -256,6 +257,7 @@ class NavM2m
      */
     public function addFile(string $file, string $signatureKey, string $accessToken)
     {
+        $this->log('NavM2m:addFile Adding file: ' . $file);
         if (!file_exists($file)) {
             throw new \Exception("A {$file} fájl nem található!");
         }
@@ -295,6 +297,7 @@ class NavM2m
      */
     public function getFileStatus(string $fileId, string $accessToken)
     {
+        $this->log('NavM2m:getFileStatus for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['getFileStatus'] . '?fileId=' . $fileId;
         return $this->get(
             endpoint: $endpoint,
@@ -313,6 +316,7 @@ class NavM2m
      */
     public function createDocument(string $fileId, string $accessToken)
     {
+        $this->log('NavM2m:createDocument Creating document for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['createDocument'];
         $signature = $this->generateSignature(
             messageId: $this->createMessageId(),
@@ -344,6 +348,7 @@ class NavM2m
      */
     public function updateDocument(string $fileId, string $accessToken)
     {
+        $this->log('NavM2m:updateDocument Updating document for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['updateDocument'];
         $signature = $this->generateSignature(
             messageId: $this->createMessageId(),
@@ -385,7 +390,7 @@ class NavM2m
     {
         $timestamp = date("YmdHis", time());
         $signatureData = $messageId . $timestamp . $data . $signatureKey;
-        $this->log('Signature data: ' . $signatureData);
+        $this->log('  NavM2m:generateSignature Signature data: ' . $signatureData);
         $signatureHash = hash('sha256', $signatureData, true);
         return base64_encode($signatureHash);
     }
@@ -393,8 +398,11 @@ class NavM2m
     private function log(string $message)
     {
         if ($this->logger) {
+            $message = preg_replace('/"accessToken":"[a-zA-Z0-9+\/=]+"/', '"accessToken":"*ACCESS_TOKEN*"', $message);
+            $message = preg_replace('/Authorization: Bearer [a-zA-Z0-9+\/\\=]+/', 'Authorization: *AUTHORIZATION_TOKEN*', $message);
+            $message = preg_replace('/"clientSecret":"[^"]+/', '"clientSecret":"*CLIENT_SECRET*"', $message);
+            $message = preg_replace('/"password":"[^"]+/', '"password":"*PASSWORD*"', $message);
             echo '  👉 ' . $message . "\n";
-            //$this->log[] = $message;
         }
     }
 }
