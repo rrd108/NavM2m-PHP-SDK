@@ -11,7 +11,6 @@ class NavM2m
     private $client;
     private $mode;
     private $API_URL;
-    private $file;
     private $xsdFile = __DIR__ . '/schema.xsd';
     private $sandboxApiUrl = 'https://m2m-dev.nav.gov.hu/rest-api/1.1/';
     private $productionApiUrl = 'https://m2m.nav.gov.hu/rest-api/1.1/';
@@ -19,21 +18,16 @@ class NavM2m
         'createToken' => 'NavM2mCommon/tokenService/Token',
         'userNonce' => 'NavM2mCommon/userregistrationService/Nonce',
         'userActivation' => 'NavM2mCommon/userregistrationService/Activation',
+        'addFile' => 'NavM2mDocument/filestoreUploadService/File',
+        'getFileStatus' => 'NavM2mDocument/filestoreDownloadService/File',
+        'createDocument' => 'NavM2mDocument/documentService/Document',
+        'updateDocument' => 'NavM2mDocument/documentService/Document',
     ];
     public $logger = true;
     private $log = [];
 
-    public function __construct(string $file, string $mode = 'sandbox', array $client)
+    public function __construct(string $mode = 'sandbox', array $client)
     {
-        if (!file_exists($file)) {
-            throw new \Exception("A {$file} fájl nem található!");
-        }
-        $this->file = $file;
-
-        if (!$this->isValidXML($file, $this->xsdFile)) {
-            throw new \Exception("A {$file} fájl nem valid XML!");
-        }
-
         if (!$client['id'] || !$client['secret']) {
             throw new \Exception("Client ID, client secret, username and password are required");
         }
@@ -53,7 +47,7 @@ class NavM2m
      *     nonce: string
      * }
      */
-    public function getUser(string $temporaryUserApiKey)
+    public function getInactiveUser(string $temporaryUserApiKey)
     {
         $data = explode('-', $temporaryUserApiKey);
         return [
@@ -64,35 +58,11 @@ class NavM2m
         ];
     }
 
-    private function log(string $message)
-    {
-        if ($this->logger) {
-            echo '  👉 ' . $message . "\n";
-            //$this->log[] = $message;
-        }
-    }
-
-    private function isValidXML($xmlFile, $xsdFile)
-    {
-        $dom = new \DOMDocument();
-        $dom->load($xmlFile);
-        return $dom->schemaValidate($xsdFile);
-    }
-
-    private function getXmlContent()
-    {
-        $xmlContent = file_get_contents($this->file);
-        if ($xmlContent === false) {
-            throw new \Exception("Nem sikerült betölteni az XML fájlt!");
-        }
-        return $xmlContent;
-    }
-
     /**
      * @return array{
-     *     resultMessage: ?string,
      *     accessToken: string,
      *     expires: int,
+     *     resultMessage: ?string,
      *     resultCode: string
      * }
      */
@@ -107,7 +77,8 @@ class NavM2m
             'password' => $user['password']
         ];
 
-        return $this->post(
+        return $this->sendRequest(
+            type: 'POST',
             endpoint: $endpoint,
             data: $data,
             messageId: $this->createMessageId()
@@ -123,10 +94,13 @@ class NavM2m
      * @return array{
      * }
      */
-    private function post(string $endpoint, array $data, string $messageId, string $accessToken = null)
+    private function sendRequest(string $type, string $endpoint, array|\CURLFile $data, string $messageId, string $accessToken = null)
     {
-        $this->log('Sending POST request to ' . $endpoint);
-        $requestBody = ['requestData' => $data];
+        if ($type != 'POST' && $type != 'PATCH') {
+            throw new \Exception("Invalid request type: " . $type);
+        }
+
+        $this->log("Sending {$type} request to {$endpoint}");
 
         $headers = [
             'Accept: application/json',
@@ -138,13 +112,19 @@ class NavM2m
             $headers[] = 'Authorization: Bearer ' . $accessToken;
         }
 
+        if ($data instanceof \CURLFile) {
+            $requestBody = ['file' => $data];
+        }
+
+        $requestBody = json_encode(['requestData' => $data]);
+
         $this->log('Headers: ' . json_encode($headers));
         $this->log('Request body: ' . json_encode($requestBody));
 
         $options = [
             CURLOPT_URL => $endpoint,
             CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => json_encode($requestBody),
+            CURLOPT_POSTFIELDS => $requestBody,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_RETURNTRANSFER => true
         ];
@@ -164,10 +144,63 @@ class NavM2m
             throw new \Exception("HTTP error: " . $httpCode . " Response: " . $response);
         }
 
-        $this->log('Received response from ' . $endpoint . ': ' . $response);
+        $this->log("Received {$type} response from {$endpoint}: " . $response);
         return json_decode($response, true);
     }
 
+    /**
+     * @return array{
+     * }
+     */
+    private function get(string $endpoint, string $messageId, string $accessToken = null)
+    {
+        $this->log('Sending GET request to ' . $endpoint);
+
+        $headers = [
+            'Accept: application/json',
+            'Authorization: Bearer ' . $accessToken,
+            'Content-Type: application/json',
+            'messageId: ' . $messageId
+        ];
+
+        $this->log('Headers: ' . json_encode($headers));
+
+        $options = [
+            CURLOPT_URL => $endpoint,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_RETURNTRANSFER => true
+        ];
+
+        $ch = curl_init();
+        curl_setopt_array($ch, $options);
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            throw new \Exception("Curl error: " . curl_error($ch));
+        }
+
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            throw new \Exception("HTTP error: " . $httpCode . " Response: " . $response);
+        }
+
+        $this->log('Received GET response from ' . $endpoint . ': ' . $response);
+        return json_decode($response, true);
+    }
+
+    /**
+     * @return array{
+     *     token: array{
+     *         accessToken: string,
+     *         expires: int,
+     *         resultMessage: ?string,
+     *         resultCode: string
+     *     },
+     *     signatureKey: string
+     * }
+     */
     public function activateUser(array $user, string $accessToken)
     {
         $this->log('Activating user with nonce: ' . $user['nonce']);
@@ -175,7 +208,8 @@ class NavM2m
 
         $data = ['nonce' => $user['nonce']];
 
-        $response = $this->post(
+        $response = $this->sendRequest(
+            type: 'POST',
             endpoint: $endpoint,
             data: $data,
             messageId: $this->createMessageId(),
@@ -197,7 +231,8 @@ class NavM2m
             data: '',
             signatureKey: $signatureKey
         )];
-        $response = $this->post(
+        $response = $this->sendRequest(
+            type: 'POST',
             endpoint: $endpoint,
             data: $data,
             messageId: $messageId,
@@ -208,8 +243,143 @@ class NavM2m
 
         $token = $this->createToken($user);
         $this->log('New token: ' . json_encode($token));
-        return $token;
+        return ['token' => $token, 'signatureKey' => $signatureKey];
     }
+
+    /**
+     * @return array{
+     *     fileId: string,
+     *     virusScanResultCode: string,
+     *     resultCode: string,
+     *     resultMessage: string,
+     * }
+     */
+    public function addFile(string $file, string $signatureKey, string $accessToken)
+    {
+        if (!file_exists($file)) {
+            throw new \Exception("A {$file} fájl nem található!");
+        }
+
+        if (!$this->isValidXML($file, $this->xsdFile)) {
+            throw new \Exception("A {$file} fájl nem valid bizonylat XML!");
+        }
+
+        $fileContent = $this->getXmlContent($file);
+        $hash = hash('sha256', $fileContent);
+        $signature = $this->generateSignature(
+            messageId: $this->createMessageId(),
+            data: '',
+            signatureKey: $signatureKey
+        );
+
+        $curlFile = new \CURLFile($file, 'application/xml', basename($file));
+
+        $endpoint = $this->API_URL . $this->endpoints['addFile'] . '?sha256hash=' . $hash . '&signature=' . $signature;
+        $response = $this->sendRequest(
+            type: 'POST',
+            endpoint: $endpoint,
+            data: $curlFile,
+            messageId: $this->createMessageId(),
+            accessToken: $accessToken
+        );
+
+        return $response;
+    }
+
+    /**
+     * @return array{
+     *     retentionTime: string,
+     *     resultCode: string,
+     *     resultMessage: string,
+     * }
+     */
+    public function getFileStatus(string $fileId, string $accessToken)
+    {
+        $endpoint = $this->API_URL . $this->endpoints['getFileStatus'] . '?fileId=' . $fileId;
+        return $this->get(
+            endpoint: $endpoint,
+            messageId: $this->createMessageId(),
+            accessToken: $accessToken
+        );
+    }
+
+    /**
+     * @return array{
+     *     documentStatus: 'CREATE_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'FILE_ID_ALREADY_USED' | 'UNSUCCESSFUL_VALIDATION' | 'INVALID_SENDER' | 'INVALID_TAXPAYER' | 'SENDER_HAS_NO_RIGHT' | 'INVALID_DOCUMENT_TYPE' | 'INVALID_DOCUMENT_VERSION' | 'FILE_CONTAINS_VIRUS' | 'INVALID_SIGNATURE' | 'OTHER_ERROR'
+     *     errors: string,
+     *     resultCode: string,
+     *     resultMessage: string,
+     * }
+     */
+    public function createDocument(string $fileId, string $accessToken)
+    {
+        $endpoint = $this->API_URL . $this->endpoints['createDocument'];
+        $signature = $this->generateSignature(
+            messageId: $this->createMessageId(),
+            data: $fileId,
+            signatureKey: $fileId
+        );
+        $data = [
+            'documentField' => $fileId,
+            'signature' => $signature
+        ];
+
+        $result = $this->sendRequest(
+            type: 'POST',
+            endpoint: $endpoint,
+            data: $data,
+            messageId: $this->createMessageId(),
+            accessToken: $accessToken
+        );
+        return $result;
+    }
+
+    /**
+     * @return array{
+     *     arrivalNumber: string,
+     *     documentStatus: 'UPDATE_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'STATUS_CHANGE_NOT_ENABLED' | 'SUBMIT_ERROR' | 'TOO_BIG_KR_FILE' | 'INVALID_SENDER' | 'INVALID_TAXPAYER' | 'SENDER_HAS_NO_RIGHT' | 'INVALID_DOCUMENT_TYPE' | 'INVALID_DOCUMENT_VERSION' | 'INVALID_SIGNATURE' | 'OTHER_ERROR',
+     *     resultCode: string,
+     *     resultMessage: string,
+     * }
+     */
+    public function updateDocument(string $fileId, string $accessToken)
+    {
+        $endpoint = $this->API_URL . $this->endpoints['updateDocument'];
+        $signature = $this->generateSignature(
+            messageId: $this->createMessageId(),
+            data: $fileId,
+            signatureKey: $fileId
+        );
+        $data = [
+            'documentField' => $fileId,
+            'signature' => $signature,
+            "documentStatus" => "UNDER_SUBMIT"
+        ];
+        return $this->sendRequest(
+            type: 'PATCH',
+            endpoint: $endpoint,
+            data: $data,
+            messageId: $this->createMessageId(),
+            accessToken: $accessToken
+        );
+    }
+
+    private function isValidXML($xmlFile, $xsdFile)
+    {
+        $dom = new \DOMDocument();
+        $dom->load($xmlFile);
+        return $dom->schemaValidate($xsdFile);
+    }
+
+    private function getXmlContent(string $file)
+    {
+        $xmlContent = file_get_contents($file);
+        if ($xmlContent === false) {
+            throw new \Exception("Nem sikerült betölteni az XML fájlt!");
+        }
+        return $xmlContent;
+    }
+
 
     private function generateSignature(string $messageId, $data, string $signatureKey)
     {
@@ -218,5 +388,13 @@ class NavM2m
         $this->log('Signature data: ' . $signatureData);
         $signatureHash = hash('sha256', $signatureData, true);
         return base64_encode($signatureHash);
+    }
+
+    private function log(string $message)
+    {
+        if ($this->logger) {
+            echo '  👉 ' . $message . "\n";
+            //$this->log[] = $message;
+        }
     }
 }
