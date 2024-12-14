@@ -390,7 +390,7 @@ class NavM2m
     {
         $timestamp = gmdate('YmdHis');  // UTC
         $signatureData = $messageId . $timestamp . $data . $signatureKey;
-        $this->log('  NavM2m:generateSignature Signature data: ' . $signatureData);
+        $this->log('  NavM2m:generateSignature Signature data: ' . $signatureData . ' (' . $type . ')');
         if ($type == 'binary') {
             return strtoupper(base64_encode(hash('sha256', $signatureData, true)));
         }
@@ -404,7 +404,6 @@ class NavM2m
             $message = preg_replace('/"accessToken":"[a-zA-Z0-9+=\/]+"/', '"accessToken":"*ACCESS_TOKEN*"', $message);
             $message = preg_replace('/"Authorization: Bearer [a-zA-Z0-9+=\/]+"/m', '"Authorization: *AUTHORIZATION_TOKEN*"', $message);
             echo '👉 ' . $message . "\n";
-            echo '  👉 ' . $message . "\n";
         }
     }
 }
