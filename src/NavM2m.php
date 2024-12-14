@@ -388,7 +388,7 @@ class NavM2m
 
     private function generateSignature(string $messageId, $data, string $signatureKey, string $type = 'text')
     {
-        $timestamp = gmdate('YmdHis');
+        $timestamp = gmdate('YmdHis');  // UTC
         $signatureData = $messageId . $timestamp . $data . $signatureKey;
         $this->log('  NavM2m:generateSignature Signature data: ' . $signatureData);
         if ($type == 'binary') {
