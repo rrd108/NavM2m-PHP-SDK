@@ -113,14 +113,13 @@ class NavM2m
             $headers[] = 'Authorization: Bearer ' . $accessToken;
         }
 
-        if ($data instanceof \CURLFile) {
-            $requestBody = ['file' => $data];
+        $requestBody = json_encode(['requestData' => $data]);
+        if (isset($data['file'])) {
+            $requestBody = $data;
         }
 
-        $requestBody = json_encode(['requestData' => $data]);
-
-        $this->log('  NavM2m:sendRequest Headers: ' . json_encode($headers));
-        $this->log('  NavM2m:sendRequest Request body: ' . json_encode($requestBody));
+        $this->log('  NavM2m:sendRequest headers: ' . json_encode($headers));
+        $this->log('  NavM2m:sendRequest request body: ' . json_encode($requestBody));
 
         $options = [
             CURLOPT_URL => $endpoint,
@@ -267,20 +266,21 @@ class NavM2m
         }
 
         $fileContent = $this->getXmlContent($file);
-        $hash = hash('sha256', $fileContent);
+        $fileHash = hash('sha256', $fileContent);
         $signature = $this->generateSignature(
             messageId: $this->createMessageId(),
-            data: '',
-            signatureKey: $signatureKey
+            data: $fileHash,
+            signatureKey: $signatureKey,
+            type: 'binary'
         );
 
-        $curlFile = new \CURLFile($file, 'application/xml', basename($file));
+        $data = ['file' => curl_file_create($file, 'application/xml', basename($file))];
 
-        $endpoint = $this->API_URL . $this->endpoints['addFile'] . '?sha256hash=' . $hash . '&signature=' . $signature;
+        $endpoint = $this->API_URL . $this->endpoints['addFile'] . '?sha256hash=' . $fileHash . '&signature=' . $signature;
         $response = $this->sendRequest(
             type: 'POST',
             endpoint: $endpoint,
-            data: $curlFile,
+            data: $data,
             messageId: $this->createMessageId(),
             accessToken: $accessToken
         );
