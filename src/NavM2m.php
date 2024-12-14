@@ -386,11 +386,14 @@ class NavM2m
     }
 
 
-    private function generateSignature(string $messageId, $data, string $signatureKey)
+    private function generateSignature(string $messageId, $data, string $signatureKey, string $type = 'text')
     {
-        $timestamp = gmdate('YmdHis', time());
+        $timestamp = gmdate('YmdHis');
         $signatureData = $messageId . $timestamp . $data . $signatureKey;
         $this->log('  NavM2m:generateSignature Signature data: ' . $signatureData);
+        if ($type == 'binary') {
+            return strtoupper(base64_encode(hash('sha256', $signatureData, true)));
+        }
         return strtoupper(hash('sha256', $signatureData));
     }
 
