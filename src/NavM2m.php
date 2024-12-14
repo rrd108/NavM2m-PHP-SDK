@@ -95,7 +95,7 @@ class NavM2m
      * @return array{
      * }
      */
-    private function sendRequest(string $type, string $endpoint, array|\CURLFile $data, string $messageId, string $accessToken = null)
+    private function sendRequest(string $type, string $endpoint, array $data, string $messageId, string $accessToken = null)
     {
         if ($type != 'POST' && $type != 'PATCH') {
             throw new \Exception("Invalid request type: " . $type);
@@ -105,7 +105,6 @@ class NavM2m
 
         $headers = [
             'Accept: application/json',
-            'Content-Type: application/json',
             'messageId: ' . $messageId
         ];
 
@@ -114,10 +113,13 @@ class NavM2m
         }
 
         $requestBody = json_encode(['requestData' => $data]);
-        if (isset($data['file'])) {
-            $requestBody = $data;
+        if (isset($data['fileContent'])) {
+            $requestBody = $data['fileContent'];
+            $headers[] = 'Content-Type: application/xml';
         }
-
+        if (!isset($data['fileContent'])) {
+            $headers[] = 'Content-Type: application/json';
+        }
         $this->log('  NavM2m:sendRequest headers: ' . json_encode($headers));
         $this->log('  NavM2m:sendRequest request body: ' . json_encode($requestBody));
 
@@ -274,7 +276,7 @@ class NavM2m
             type: 'binary'
         );
 
-        $data = ['file' => curl_file_create($file, 'application/xml', basename($file))];
+        $data = ['fileContent' => $fileContent];
 
         $endpoint = $this->API_URL . $this->endpoints['addFile'] . '?sha256hash=' . $fileHash . '&signature=' . $signature;
         $response = $this->sendRequest(
@@ -376,13 +378,36 @@ class NavM2m
         return $dom->schemaValidate($xsdFile);
     }
 
-    private function getXmlContent(string $file)
+    private function getXmlContent(string $file): string
     {
         $xmlContent = file_get_contents($file);
         if ($xmlContent === false) {
             throw new \Exception("Nem sikerült betölteni az XML fájlt!");
         }
-        return $xmlContent;
+
+        // Load XML with preserving whitespace
+        $dom = new \DOMDocument();
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = false;
+        $dom->loadXML($xmlContent);
+
+        // Convert back to string
+        $xmlContent = $dom->saveXML();
+
+        // Remove all whitespace between tags and XML declaration
+        $xmlContent = preg_replace(
+            [
+                '/\s+between\s+/',    // Remove spaces between words
+                '/>\s+</',            // Remove whitespace between tags
+                '/\s+>/',             // Remove whitespace before closing bracket
+                '/<\s+/',             // Remove whitespace after opening bracket
+                '/<\?xml[^>]+\?>/'    // Remove XML declaration
+            ],
+            [' ', '><', '>', '<', ''],
+            $xmlContent
+        );
+
+        return trim($xmlContent);
     }
 
 
