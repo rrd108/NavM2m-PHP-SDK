@@ -251,7 +251,7 @@ class NavM2m
      * @return array{
      *     fileId: string,
      *     virusScanResultCode: string,
-     *     resultCode: string,
+     *     resultCode: 'UPLOAD_SUCCESS' | 'HASH_FAILURE' | 'OTHER_ERROR',
      *     resultMessage: string,
      * }
      */
