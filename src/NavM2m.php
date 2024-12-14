@@ -397,10 +397,10 @@ class NavM2m
     private function log(string $message)
     {
         if ($this->logger) {
-            $message = preg_replace('/"accessToken":"[a-zA-Z0-9+\/=]+"/', '"accessToken":"*ACCESS_TOKEN*"', $message);
-            $message = preg_replace('/Authorization: Bearer [a-zA-Z0-9+\/\\=]+/', 'Authorization: *AUTHORIZATION_TOKEN*', $message);
-            $message = preg_replace('/"clientSecret":"[^"]+/', '"clientSecret":"*CLIENT_SECRET*"', $message);
-            $message = preg_replace('/"password":"[^"]+/', '"password":"*PASSWORD*"', $message);
+            $message = str_replace('\\', '', $message);
+            $message = preg_replace('/"accessToken":"[a-zA-Z0-9+=\/]+"/', '"accessToken":"*ACCESS_TOKEN*"', $message);
+            $message = preg_replace('/"Authorization: Bearer [a-zA-Z0-9+=\/]+"/m', '"Authorization: *AUTHORIZATION_TOKEN*"', $message);
+            echo '👉 ' . $message . "\n";
             echo '  👉 ' . $message . "\n";
         }
     }
