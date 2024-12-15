@@ -14,6 +14,7 @@ $client = [
     'secret' => $_ENV['NAV2M2M_CLIENT_SECRET'], // a kliens program titkos kulcsa az UPO-nál
 ];
 $navM2m = new NavM2m(mode: 'sandbox', client: $client); // mode: 'production'
+$navM2m->logger = true;
 
 // INFO a $_ENV['NAV2M2M_USER_TEMPORARY_API_KEY'] a usernek az UPO-ról a user tárhelyére kiküldött API kulcs
 // user aktiválása - csak egyszer per user

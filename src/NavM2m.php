@@ -35,10 +35,6 @@ class NavM2m
         $this->mode = $mode;
         $this->API_URL = $mode == 'production' ? $this->productionApiUrl : $this->sandboxApiUrl;
 
-        if ($mode == 'sandbox') {
-            $this->logger = true;
-        }
-
         $this->log('NavM2m:constructor initialized in ' . $this->mode . ' mode');
     }
 

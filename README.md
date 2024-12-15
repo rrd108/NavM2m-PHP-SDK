@@ -120,11 +120,11 @@ A `$result` hibák kezelésére a `test.php` fájlban találsz példát.
 
 ### Loggolás
 
-Az SDK sandbox módban alapértelmezetten kiírja a képernyőre a kéréseket és a válaszokat, ami hasznos lehet a hibakeresés során.
-A loggolást az objektum létrehozásakor ki, illetve be is kapcsolhatod.
+A log kiírja a képernyőre a kéréseket és a válaszokat, ami hasznos lehet a hibakeresés során.
+A loggolást az objektum létrehozásakor be kapcsolhatod, alapértelmezetten ki van kapcsolva.
 
 ```php
-$navM2m->logger = false;
+$navM2m->logger = true;
 ```
 
 ## Támogatás

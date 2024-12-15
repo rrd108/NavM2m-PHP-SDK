@@ -1,22 +1,41 @@
 {
-  "name": "rrd108/nav-m2m-php",
+  "name": "rrd108/nav-m2m",
+  "description": "NAV M2M API integration",
   "type": "library",
+  "version": "0.5.0",
+  "require": {
+    "php": ">=8.1",
+    "ramsey/uuid": "^4.7",
+    "vlucas/phpdotenv": "^5.5"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^10.0"
+  },
   "license": "MIT",
-  "version": "0.4.0",
   "autoload": {
     "psr-4": {
       "Rrd108\\NavM2m\\": "src/"
     }
   },
+  "autoload-dev": {
+    "psr-4": {
+      "Tests\\": "tests/"
+    }
+  },
   "authors": [
     {
       "name": "rrd108",
-      "email": "rrd@webmania.cc"
+      "email": "rrd108@gmail.com"
     }
   ],
-  "require": {
-    "php": ">=8.0",
-    "ramsey/uuid": "^4.7",
-    "vlucas/phpdotenv": "^5.6"
+  "scripts": {
+    "test": "phpunit",
+    "test:coverage": "phpunit --coverage-html coverage",
+    "test:watch": "phpunit-watcher watch"
+  },
+  "scripts-descriptions": {
+    "test": "Run all tests",
+    "test:coverage": "Run all tests with HTML coverage report",
+    "test:watch": "Run tests in watch mode for development"
   }
 }
