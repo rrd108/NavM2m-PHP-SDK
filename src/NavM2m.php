@@ -398,16 +398,21 @@ class NavM2m
     }
 
 
-    private function generateSignature(string $messageId, $data, string $signatureKey, string $type = 'text')
+    protected function generateSignature(string $messageId, $data, string $signatureKey, string $type = 'text')
     {
-        $timestamp = gmdate('YmdHis');  // UTC - approx valid for 1 minute, after that it will result with "invalid signature"
-
+        $timestamp = $this->getCurrentUTCTimestamp();
         $signatureData = $messageId . $timestamp . $data . $signatureKey;
         $this->log('  NavM2m:generateSignature Signature data: ' . $signatureData . ' (' . $type . ')');
         if ($type == 'binary') {
             return strtoupper(base64_encode(hash('sha256', $signatureData, true)));
         }
         return strtoupper(hash('sha256', $signatureData));
+    }
+
+    // UTC - approx valid for 1 minute, after that it will result with "invalid signature"
+    protected function getCurrentUTCTimestamp(): string
+    {
+        return gmdate('YmdHis');
     }
 
     private function log(string $message)
