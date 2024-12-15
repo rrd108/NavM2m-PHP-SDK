@@ -23,8 +23,7 @@ class NavM2m
         'createDocument' => 'NavM2mDocument/documentService/Document',
         'updateDocument' => 'NavM2mDocument/documentService/Document',
     ];
-    public $logger = true;
-    private $log = [];
+    public $logger = false;
 
     public function __construct(string $mode = 'sandbox', array $client)
     {
@@ -35,6 +34,10 @@ class NavM2m
         $this->client = $client;
         $this->mode = $mode;
         $this->API_URL = $mode == 'production' ? $this->productionApiUrl : $this->sandboxApiUrl;
+
+        if ($mode == 'sandbox') {
+            $this->logger = true;
+        }
 
         $this->log('NavM2m:constructor initialized in ' . $this->mode . ' mode');
     }
