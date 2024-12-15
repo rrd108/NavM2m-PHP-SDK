@@ -110,6 +110,14 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
                         signatureKey: $user['signatureKey'],
                         accessToken: $token['accessToken']
                     );
+
+                    if ($result['documentStatus'] != 'SUBMITTED' || !$result['arrivalNumber']) {
+                        echo "👉 documentStatus: {$result['documentStatus']}, resultCode: {$result['resultCode']} \n";
+                    }
+
+                    if ($result['documentStatus'] == 'SUBMITTED' && $result['arrivalNumber']) {
+                        echo "💥 Sikeres bizonylat beküldés, érkezési szám: {$result['arrivalNumber']} \n";
+                    }
                 }
             }
         }
