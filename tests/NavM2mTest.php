@@ -2,10 +2,11 @@
 
 namespace Tests;
 
+use Rrd108\NavM2m\NavM2m;
 use PHPUnit\Framework\TestCase;
 use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\TestStatus\Warning;
 use PHPUnit\Framework\Attributes\BeforeClass;
-use Rrd108\NavM2m\NavM2m;
 
 class NavM2mTest extends TestCase
 {
@@ -46,103 +47,20 @@ class NavM2mTest extends TestCase
         $this->assertEquals($expectedResult, $result);
     }
 
-    /*#[Test]
-    public function createTokenReturnsExpectedResponse(): void
-    {
-        $user = [
-            'name' => 'testuser',
-            'password' => 'testpass'
-        ];
-
-        $navM2mMock = $this->getMockBuilder(NavM2m::class)
-            ->setConstructorArgs(['sandbox', self::$client])
-            ->onlyMethods(['sendRequest'])
-            ->getMock();
-
-        $expectedResponse = [
-            'accessToken' => 'test-token',
-            'expires' => 3600,
-            'resultMessage' => null,
-            'resultCode' => 'TOKEN_CREATION_SUCCESSFUL'
-        ];
-
-        $navM2mMock->expects($this->once())
-            ->method('sendRequest')
-            ->willReturn($expectedResponse);
-
-        $result = $navM2mMock->createToken($user);
-        $this->assertEquals($expectedResponse, $result);
-    }*/
-
-    /*#[Test]
-    public function addFileHandlesValidFileCorrectly(): void
-    {
-        $tempXmlFile = tempnam(sys_get_temp_dir(), 'test_');
-        file_put_contents($tempXmlFile, '<?xml version="1.0"?><root></root>');
-
-        $navM2mMock = $this->getMockBuilder(NavM2m::class)
-            ->setConstructorArgs(['sandbox', self::$client])
-            ->onlyMethods(['sendRequest', 'isValidXML'])
-            ->getMock();
-
-        $expectedResponse = [
-            'fileId' => 'test-file-id',
-            'virusScanResultCode' => 'PASSED',
-            'resultCode' => 'UPLOAD_SUCCESS',
-            'resultMessage' => 'Success',
-            'correlationId' => 'test-correlation-id'
-        ];
-
-        $navM2mMock->expects($this->once())
-            ->method('isValidXML')
-            ->willReturn(true);
-
-        $navM2mMock->expects($this->once())
-            ->method('sendRequest')
-            ->willReturn($expectedResponse);
-
-        $result = $navM2mMock->addFile(
-            $tempXmlFile,
-            'test-signature-key',
-            'test-access-token'
-        );
-
-        $this->assertEquals($expectedResponse, $result);
-        unlink($tempXmlFile);
-    }*/
-
     #[Test]
-    public function addFileThrowsExceptionForNonExistentFile(): void
+    public function isValidXML(): void
     {
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('A non-existent-file.xml fájl nem található!');
+        // Create a test double to access protected method
+        $navM2mTest = new class('sandbox', self::$client) extends NavM2m {
+            public function isValidXML($xml, $schemaFile): bool
+            {
+                return parent::isValidXML($xml, $schemaFile);
+            }
+        };
 
-        self::$navM2m->addFile(
-            'non-existent-file.xml',
-            'test-signature-key',
-            'test-access-token'
-        );
+        $fixturesPath = __DIR__ . '/fixtures/';
+
+        $this->assertTrue($navM2mTest->isValidXML($fixturesPath . '09teszt.xml', $fixturesPath . 'schema.xsd'));
+        $this->assertFalse($navM2mTest->isValidXML($fixturesPath . 'invalid.xml', $fixturesPath . 'schema.xsd'));
     }
-
-    /*#[Test]
-    public function getFileStatusReturnsExpectedResponse(): void
-    {
-        $navM2mMock = $this->getMockBuilder(NavM2m::class)
-            ->setConstructorArgs(['sandbox', self::$client])
-            ->onlyMethods(['get'])
-            ->getMock();
-
-        $expectedResponse = [
-            'retentionTime' => '2024-01-01',
-            'resultCode' => 'PASSED',
-            'resultMessage' => 'Success'
-        ];
-
-        $navM2mMock->expects($this->once())
-            ->method('get')
-            ->willReturn($expectedResponse);
-
-        $result = $navM2mMock->getFileStatus('test-file-id', 'test-access-token');
-        $this->assertEquals($expectedResponse, $result);
-    }*/
 }

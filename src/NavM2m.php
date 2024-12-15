@@ -62,8 +62,8 @@ class NavM2m
      * @return array{
      *     accessToken: string,
      *     expires: int,
-     *     resultMessage: ?string,
-     *     resultCode: string
+     *     resultMessage?: string,
+     *     resultCode: 'TOKEN_CREATION_SUCCESSFUL' | 'TOKEN_CREATION_FAILED'
      * }
      */
     public function createToken(array $user): array
@@ -90,11 +90,7 @@ class NavM2m
         return Uuid::uuid4()->toString();
     }
 
-    /**
-     * @return array{
-     * }
-     */
-    private function sendRequest(string $type, string $endpoint, array $data, string $messageId, string $accessToken = null, string $correlationId = null)
+    protected function sendRequest(string $type, string $endpoint, array $data, string $messageId, string $accessToken = null, string $correlationId = null)
     {
         if ($type != 'POST' && $type != 'PATCH') {
             throw new \Exception("Invalid request type: " . $type);
@@ -153,10 +149,6 @@ class NavM2m
         return json_decode($response, true);
     }
 
-    /**
-     * @return array{
-     * }
-     */
     private function get(string $endpoint, string $messageId, string $accessToken = null)
     {
         $this->log('  NavM2m:get Sending GET request to ' . $endpoint);
@@ -390,11 +382,11 @@ class NavM2m
         );
     }
 
-    private function isValidXML($xmlFile, $xsdFile)
+    protected function isValidXML($xmlFile, $schemaFile)
     {
         $dom = new \DOMDocument();
         $dom->load($xmlFile);
-        return $dom->schemaValidate($xsdFile);
+        return $dom->schemaValidate($schemaFile);
     }
 
     private function getXmlContent(string $file): string

@@ -2,6 +2,8 @@
 
 Ez a PHP SDK (Software Development Kit) a Nemzeti Adó- és Vámhivatal (NAV) által biztosított M2M (Machine-to-Machine) interfészhez való kapcsolódást segíti. Az SDK lehetővé teszi a gépi kommunikációt a NAV rendszereivel, például bizonylatok beküldéséhez.
 
+Ha a csomag hasznos volt a számodra, akkor nyomj rá a star-ra!
+
 ## Telepítés
 
 1.  **Composer használata:** A legkényelmesebb mód az SDK telepítésére a Composer használata:
@@ -16,7 +18,7 @@ Ez a PHP SDK (Software Development Kit) a Nemzeti Adó- és Vámhivatal (NAV) á
 
 ## Használat
 
-A `test.php` fájlban található példák segítségével megismerheted az SDK használatát.
+A `minta.php` fájlban található példák segítségével megismerheted az SDK használatát.
 
 ### Inicializálás
 
@@ -86,7 +88,7 @@ $correlationId = $result['correlationId'];
 echo "Fájl feltöltve. File ID: " . $fileId;
 ```
 
-A `$result` hibák kezelésére a `test.php` fájlban találsz példát.
+A `$result` hibák kezelésére a `minta.php` fájlban találsz példát.
 
 ### Bizonylat létrehozása/validálása
 
@@ -101,7 +103,7 @@ $result = $navM2m->createDocument(
 );
 ```
 
-A `$result` hibák kezelésére a `test.php` fájlban találsz példát.
+A `$result` hibák kezelésére a `minta.php` fájlban találsz példát.
 
 ### Bizonylat érkeztetése
 
@@ -116,7 +118,7 @@ $result = $navM2m->updateDocument(
 );
 ```
 
-A `$result` hibák kezelésére a `test.php` fájlban találsz példát.
+A `$result` hibák kezelésére a `minta.php` fájlban találsz példát.
 
 ### Loggolás
 
