@@ -55,10 +55,13 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
     }
 
     if ($result['result_code'] == 'UPLOAD_SUCCESS') {
+        $fileId = $result['fileId'];
+        $correlationId = $result['correlationId'];
+
         if (!isset($result['virusScanResultCode'])) {
             // a vírus ellenőrzés tovább tartott mint 30 másodperc, külön le kell kérdezni
             // sleep(30);
-            $result = $navM2m->getFileStatus($result['fileId'], $token['accessToken']);
+            $result = $navM2m->getFileStatus($fileId, $token['accessToken']);
             $result['virusScanResultCode'] = $result['resultCode'];
         }
 
@@ -77,14 +80,37 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
         if ($result['virusScanResultCode'] == 'PASSED') {
             echo '👉 virusScanResultCode: PASSED' . "\n";
             $result = $navM2m->createDocument(
-                fileId: $result['fileId'],
-                correlationId: $result['correlationId'],
+                fileId: $fileId,
+                correlationId: $correlationId,
                 signatureKey: $user['signatureKey'],
                 accessToken: $token['accessToken']
             );
-            if ($result['documentStatus'] == 'CREATE_DOCUMENT_SUCCESS') {
+
+
+            if ($result['resultCode'] != 'CREATE_DOCUMENT_SUCCESS') {
+                echo '👉 documentStatus: ' . $result['documentStatus'] . "\n";   // TODO
+                if ($result['documentStatus'] == 'UNDER_PREVALIDATION' || $result['documentStatus'] == 'UNDER_VALIDATION') {
+                    echo '👉 documentStatus: ' . $result['documentStatus'] . "\n";
+                    // TODO we have to wait for the document to be validated and then call the getDocument endpoint
+                }
+            }
+
+            if ($result['resultCode'] == 'CREATE_DOCUMENT_SUCCESS') {
                 echo '👉 documentStatus: CREATE_DOCUMENT_SUCCESS' . "\n";
-                $result = $navM2m->updateDocument($result['fileId'], $token['accessToken']);
+
+                if ($result['documentStatus'] != 'VALIDATED') {
+                    echo '👉 documentStatus: ' . $result['documentStatus'] . "\n";
+                    // TODO we have to wait for the document to be validated and then call the getDocument endpoint
+                }
+
+                if ($result['documentStatus'] == 'VALIDATED') {
+                    $result = $navM2m->updateDocument(
+                        fileId: $fileId,
+                        correlationId: $correlationId,
+                        signatureKey: $user['signatureKey'],
+                        accessToken: $token['accessToken']
+                    );
+                }
             }
         }
     }

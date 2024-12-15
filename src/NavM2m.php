@@ -129,7 +129,7 @@ class NavM2m
 
         $options = [
             CURLOPT_URL => $endpoint,
-            CURLOPT_POST => true,
+            CURLOPT_CUSTOMREQUEST => $type,
             CURLOPT_POSTFIELDS => $requestBody,
             CURLOPT_HTTPHEADER => $headers,
             CURLOPT_RETURNTRANSFER => true,
@@ -287,7 +287,6 @@ class NavM2m
         $data = ['fileContent' => $fileContent];
 
         $endpoint = $this->API_URL . $this->endpoints['addFile'] . '?sha256hash=' . $fileHash . '&signature=' . $signature;
-        // TODO uelencode signature?
 
         $response = $this->sendRequest(
             type: 'POST',
@@ -306,7 +305,7 @@ class NavM2m
     /**
      * @return array{
      *     retentionTime: string,
-     *     resultCode: string,
+     *     resultCode: 'PASSED' | 'FAILED' | 'WAITING' | 'OTHER_ERROR',
      *     resultMessage: string,
      * }
      */
@@ -323,9 +322,9 @@ class NavM2m
 
     /**
      * @return array{
-     *     documentStatus: 'CREATE_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'FILE_ID_ALREADY_USED' | 'UNSUCCESSFUL_VALIDATION' | 'INVALID_SENDER' | 'INVALID_TAXPAYER' | 'SENDER_HAS_NO_RIGHT' | 'INVALID_DOCUMENT_TYPE' | 'INVALID_DOCUMENT_VERSION' | 'FILE_CONTAINS_VIRUS' | 'INVALID_SIGNATURE' | 'OTHER_ERROR'
+     *     documentStatus: 'UNDER_PREVALIDATION' | 'PREVALIDATION_ERROR' | 'UNDER_VALIDATION' | 'VALIDATION_ERROR' | 'VALIDATED' | 'UNDER_SUBMIT' | 'SUBMIT_ERROR' | 'SUBMITTED',
      *     errors: string,
-     *     resultCode: string,
+     *     resultCode:'CREATE_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'FILE_ID_ALREADY_USED' | 'UNSUCCESSFUL_VALIDATION' | 'INVALID_SENDER' | 'INVALID_TAXPAYER' | 'SENDER_HAS_NO_RIGHT' | 'INVALID_DOCUMENT_TYPE' | 'INVALID_DOCUMENT_VERSION' | 'FILE_CONTAINS_VIRUS' | 'INVALID_SIGNATURE' | 'OTHER_ERROR',
      *     resultMessage: string,
      * }
      */
@@ -361,12 +360,13 @@ class NavM2m
     /**
      * @return array{
      *     arrivalNumber: string,
-     *     documentStatus: 'UPDATE_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'STATUS_CHANGE_NOT_ENABLED' | 'SUBMIT_ERROR' | 'TOO_BIG_KR_FILE' | 'INVALID_SENDER' | 'INVALID_TAXPAYER' | 'SENDER_HAS_NO_RIGHT' | 'INVALID_DOCUMENT_TYPE' | 'INVALID_DOCUMENT_VERSION' | 'INVALID_SIGNATURE' | 'OTHER_ERROR',
-     *     resultCode: string,
+     *     documentStatus: 'UNDER_PREVALIDATION' | 'PREVALIDATION_ERROR' | 'UNDER_VALIDATION' | 'VALIDATION_ERROR' | 'VALIDATED' | 'UNDER_SUBMIT' | 'SUBMIT_ERROR' | 'SUBMITTED',
+     *     errors: string,
+     *     resultCode: 'UPDATE_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'STATUS_CHANGE_NOT_ENABLED' | 'SUBMIT_ERROR' | 'TOO_BIG_KR_FILE', 'INVALID_SENDER', 'INVALID_TAXPAYER' | 'SENDER_HAS_NO_RIGHT' | 'INVALID_DOCUMENT_TYPE' | 'INVALID_DOCUMENT_VERSION' | 'INVALID_SIGNATURE' | 'OTHER_ERROR',
      *     resultMessage: string,
      * }
      */
-    public function updateDocument(string $fileId, string $accessToken)
+    public function updateDocument(string $fileId, string $signatureKey, string $accessToken, string $correlationId = null)
     {
         $this->log('NavM2m:updateDocument Updating document for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['updateDocument'];
@@ -374,7 +374,8 @@ class NavM2m
         $signature = $this->generateSignature(
             messageId: $messageId,
             data: $fileId,
-            signatureKey: $fileId
+            signatureKey: $signatureKey,
+            type: 'binary'
         );
         $data = [
             'documentFileId' => $fileId,
