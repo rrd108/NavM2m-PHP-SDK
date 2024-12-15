@@ -82,11 +82,11 @@ class NavM2m
             type: 'POST',
             endpoint: $endpoint,
             data: $data,
-            messageId: $this->createMessageId()
+            messageId: $this->generateMessageId()
         );
     }
 
-    private function createMessageId()
+    private function generateMessageId(): string
     {
         return Uuid::uuid4()->toString();
     }
@@ -112,12 +112,12 @@ class NavM2m
             $headers[] = 'Authorization: Bearer ' . $accessToken;
         }
 
-        $requestBody = json_encode(['requestData' => $data]);
         if (isset($data['fileContent'])) {
             $requestBody = $data['fileContent'];
             $headers[] = 'Content-Type: application/xml';
         }
         if (!isset($data['fileContent'])) {
+            $requestBody = json_encode(['requestData' => $data]);
             $headers[] = 'Content-Type: application/json';
         }
         $this->log('  NavM2m:sendRequest headers: ' . json_encode($headers));
@@ -128,7 +128,7 @@ class NavM2m
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $requestBody,
             CURLOPT_HTTPHEADER => $headers,
-            CURLOPT_RETURNTRANSFER => true
+            CURLOPT_RETURNTRANSFER => true,
         ];
 
         $ch = curl_init();
@@ -143,7 +143,8 @@ class NavM2m
         curl_close($ch);
 
         if ($httpCode !== 200) {
-            throw new \Exception("HTTP error: " . $httpCode . " Response: " . $response);
+            $now = date('Y-m-d H:i:s');
+            throw new \Exception("HTTP error: ($now) {$httpCode} Response: {$response}");
         }
 
         $this->log("  NavM2m:sendRequest Received {$type} response from {$endpoint}: " . $response);
@@ -214,7 +215,7 @@ class NavM2m
             type: 'POST',
             endpoint: $endpoint,
             data: $data,
-            messageId: $this->createMessageId(),
+            messageId: $this->generateMessageId(),
             accessToken: $accessToken
         );
 
@@ -227,7 +228,7 @@ class NavM2m
         $this->log('NavM2m:activateUser Signature key: ' . $signatureKey);
 
         $endpoint = $this->API_URL . $this->endpoints['userActivation'];
-        $messageId = $this->createMessageId();
+        $messageId = $this->generateMessageId();
         $data = ['signature' => $this->generateSignature(
             messageId: $messageId,
             data: '',
@@ -269,8 +270,9 @@ class NavM2m
 
         $fileContent = $this->getXmlContent($file);
         $fileHash = hash('sha256', $fileContent);
+        $messageId = $this->generateMessageId();
         $signature = $this->generateSignature(
-            messageId: $this->createMessageId(),
+            messageId: $messageId,
             data: $fileHash,
             signatureKey: $signatureKey,
             type: 'binary'
@@ -279,11 +281,13 @@ class NavM2m
         $data = ['fileContent' => $fileContent];
 
         $endpoint = $this->API_URL . $this->endpoints['addFile'] . '?sha256hash=' . $fileHash . '&signature=' . $signature;
+        // TODO uelencode signature?
+
         $response = $this->sendRequest(
             type: 'POST',
             endpoint: $endpoint,
             data: $data,
-            messageId: $this->createMessageId(),
+            messageId: $messageId,
             accessToken: $accessToken
         );
 
@@ -303,7 +307,7 @@ class NavM2m
         $endpoint = $this->API_URL . $this->endpoints['getFileStatus'] . '?fileId=' . $fileId;
         return $this->get(
             endpoint: $endpoint,
-            messageId: $this->createMessageId(),
+            messageId: $this->generateMessageId(),
             accessToken: $accessToken
         );
     }
@@ -320,8 +324,9 @@ class NavM2m
     {
         $this->log('NavM2m:createDocument Creating document for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['createDocument'];
+        $messageId = $this->generateMessageId();
         $signature = $this->generateSignature(
-            messageId: $this->createMessageId(),
+            messageId: $messageId,
             data: $fileId,
             signatureKey: $fileId
         );
@@ -334,7 +339,7 @@ class NavM2m
             type: 'POST',
             endpoint: $endpoint,
             data: $data,
-            messageId: $this->createMessageId(),
+            messageId: $messageId,
             accessToken: $accessToken
         );
         return $result;
@@ -352,8 +357,9 @@ class NavM2m
     {
         $this->log('NavM2m:updateDocument Updating document for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['updateDocument'];
+        $messageId = $this->generateMessageId();
         $signature = $this->generateSignature(
-            messageId: $this->createMessageId(),
+            messageId: $messageId,
             data: $fileId,
             signatureKey: $fileId
         );
@@ -366,7 +372,7 @@ class NavM2m
             type: 'PATCH',
             endpoint: $endpoint,
             data: $data,
-            messageId: $this->createMessageId(),
+            messageId: $messageId,
             accessToken: $accessToken
         );
     }
@@ -381,39 +387,16 @@ class NavM2m
     private function getXmlContent(string $file): string
     {
         $xmlContent = file_get_contents($file);
-        if ($xmlContent === false) {
-            throw new \Exception("Nem sikerült betölteni az XML fájlt!");
-        }
-
-        // Load XML with preserving whitespace
-        $dom = new \DOMDocument();
-        $dom->preserveWhiteSpace = false;
-        $dom->formatOutput = false;
-        $dom->loadXML($xmlContent);
-
-        // Convert back to string
-        $xmlContent = $dom->saveXML();
-
-        // Remove all whitespace between tags and XML declaration
-        $xmlContent = preg_replace(
-            [
-                '/\s+between\s+/',    // Remove spaces between words
-                '/>\s+</',            // Remove whitespace between tags
-                '/\s+>/',             // Remove whitespace before closing bracket
-                '/<\s+/',             // Remove whitespace after opening bracket
-                '/<\?xml[^>]+\?>/'    // Remove XML declaration
-            ],
-            [' ', '><', '>', '<', ''],
-            $xmlContent
-        );
-
-        return trim($xmlContent);
+        $encoding = mb_detect_encoding($xmlContent, null, true);
+        $this->log('NavM2m:getXmlContent Detected encoding: ' . $encoding);
+        return $xmlContent;
     }
 
 
     private function generateSignature(string $messageId, $data, string $signatureKey, string $type = 'text')
     {
-        $timestamp = gmdate('YmdHis');  // UTC
+        $timestamp = gmdate('YmdHis');  // UTC - approx valid for 1 minute, after that it will result with "invalid signature"
+
         $signatureData = $messageId . $timestamp . $data . $signatureKey;
         $this->log('  NavM2m:generateSignature Signature data: ' . $signatureData . ' (' . $type . ')');
         if ($type == 'binary') {
@@ -428,7 +411,7 @@ class NavM2m
             $message = str_replace('\\', '', $message);
             $message = preg_replace('/"accessToken":"[a-zA-Z0-9+=\/]+"/', '"accessToken":"*ACCESS_TOKEN*"', $message);
             $message = preg_replace('/"Authorization: Bearer [a-zA-Z0-9+=\/]+"/m', '"Authorization: *AUTHORIZATION_TOKEN*"', $message);
-            echo '👉 ' . $message . "\n";
+            echo date('Y-m-d H:i:s') . ' 👉 ' . $message . "\n";
         }
     }
 }

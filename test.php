@@ -9,20 +9,23 @@ echo '👉 test' . "\n";
 $dotenv = Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
-// echo Ramsey\Uuid\Uuid::uuid4()->toString(); die;
+//echo Ramsey\Uuid\Uuid::uuid4()->toString() . "\n";die;
+
 $client = [
     'id' => $_ENV['NAV2M2M_CLIENT_ID'],
     'secret' => $_ENV['NAV2M2M_CLIENT_SECRET'],
 ];
-$navM2m = new NavM2m(mode: 'production', client: $client);
+$navM2m = new NavM2m(mode: 'sandbox', client: $client);
 
-// user aktiválása - csak egyszer per user, nonce a userből
+// user aktiválása - csak egyszer per user
 /*
 $user = $navM2m->getInactiveUser($_ENV['NAV2M2M_USER_TEMPORARY_API_KEY']);
 $token = $navM2m->createToken($user);
-// list($token, $signingKey) = $navM2m->activateUser($user, $token['accessToken']);
-// TODO el kell tárolni a username, password és signingKey-t az adatbázisban a userhez
+list($token, $signingKey) = $navM2m->activateUser($user, $token['accessToken']);
+print_r($token);
+print_r($signingKey);
 */
+// TODO el kell tárolni a username, password és signingKey-t az adatbázisban a userhez
 
 // TODO user adatainak lekérdezése az adatbázisból
 // INFO csak teszteléshez, mivel itt nincs adatbázis
@@ -37,9 +40,10 @@ $token = $navM2m->createToken($user);
 
 if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
     $result = $navM2m->addFile(
-        file: './09teszt.xml',
+        //file: './09teszt.xml',
+        file: '/home/rrd/adatok2024/fejlesztes/nav-m2m/M2M/sample/24T34.xml',
         signatureKey: $user['signatureKey'],
-        accessToken: $token['accessToken']
+        accessToken: $token['accessToken'],
     );
 
     if ($result['result_code'] == 'UPLOAD_SUCCESS') {
@@ -58,7 +62,7 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
 
         if ($result['virusScanResultCode'] == 'PASSED') {
             echo '👉 virusScanResultCode: PASSED' . "\n";
-            unset($result['virusScanResultCode']);
+            //unset($result['virusScanResultCode']);
         }
         if ($result['virusScanResultCode'] == 'WAITING') {
             echo '👉 virusScanResultCode: WAITING' . "\n";
