@@ -38,6 +38,10 @@ $user = [
 
 $token = $navM2m->createToken($user);
 
+if ($token['resultCode'] != 'TOKEN_CREATION_SUCCESSFUL') {
+    echo '👉 token creation failed' . "\n";         // TODO
+}
+
 if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
     $result = $navM2m->addFile(
         //file: './09teszt.xml',
@@ -46,32 +50,42 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
         accessToken: $token['accessToken'],
     );
 
-    if ($result['result_code'] == 'UPLOAD_SUCCESS') {
+    if ($result['result_code'] != 'UPLOAD_SUCCESS') {
+        echo '👉 upload failed' . "\n";     // TODO
+    }
 
+    if ($result['result_code'] == 'UPLOAD_SUCCESS') {
         if (!isset($result['virusScanResultCode'])) {
             // a vírus ellenőrzés tovább tartott mint 30 másodperc, külön le kell kérdezni
             // sleep(30);
             $result = $navM2m->getFileStatus($result['fileId'], $token['accessToken']);
             $result['virusScanResultCode'] = $result['resultCode'];
-            $result = $navM2m->createDocument($result['fileId'], $token['accessToken']);
-            if ($result['documentStatus'] == 'CREATE_DOCUMENT_SUCCESS') {
-                echo '👉 documentStatus: CREATE_DOCUMENT_SUCCESS' . "\n";
-                $result = $navM2m->updateDocument($result['fileId'], $token['accessToken']);
-            }
+        }
+
+        if ($result['virusScanResultCode'] == 'WAITING') {
+            echo '👉 virusScanResultCode: WAITING' . "\n";      // TODO
+        }
+
+        if ($result['virusScanResultCode'] == 'FAILED') {
+            echo '👉 virusScanResultCode: FAILED' . "\n";       // TODO
+        }
+
+        if ($result['virusScanResultCode'] == 'OTHER_ERROR') {
+            echo '👉 virusScanResultCode: OTHER_ERROR' . "\n";  // TODO
         }
 
         if ($result['virusScanResultCode'] == 'PASSED') {
             echo '👉 virusScanResultCode: PASSED' . "\n";
-            //unset($result['virusScanResultCode']);
-        }
-        if ($result['virusScanResultCode'] == 'WAITING') {
-            echo '👉 virusScanResultCode: WAITING' . "\n";
-        }
-        if ($result['virusScanResultCode'] == 'FAILED') {
-            echo '👉 virusScanResultCode: FAILED' . "\n";
-        }
-        if ($result['virusScanResultCode'] == 'OTHER_ERROR') {
-            echo '👉 virusScanResultCode: OTHER_ERROR' . "\n";
+            $result = $navM2m->createDocument(
+                fileId: $result['fileId'],
+                correlationId: $result['correlationId'],
+                signatureKey: $user['signatureKey'],
+                accessToken: $token['accessToken']
+            );
+            if ($result['documentStatus'] == 'CREATE_DOCUMENT_SUCCESS') {
+                echo '👉 documentStatus: CREATE_DOCUMENT_SUCCESS' . "\n";
+                $result = $navM2m->updateDocument($result['fileId'], $token['accessToken']);
+            }
         }
     }
 }

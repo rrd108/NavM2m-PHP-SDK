@@ -95,7 +95,7 @@ class NavM2m
      * @return array{
      * }
      */
-    private function sendRequest(string $type, string $endpoint, array $data, string $messageId, string $accessToken = null)
+    private function sendRequest(string $type, string $endpoint, array $data, string $messageId, string $accessToken = null, string $correlationId = null)
     {
         if ($type != 'POST' && $type != 'PATCH') {
             throw new \Exception("Invalid request type: " . $type);
@@ -107,6 +107,10 @@ class NavM2m
             'Accept: application/json',
             'messageId: ' . $messageId
         ];
+
+        if ($correlationId) {
+            $headers[] = 'correlationId: ' . $correlationId;
+        }
 
         if ($accessToken) {
             $headers[] = 'Authorization: Bearer ' . $accessToken;
@@ -143,8 +147,7 @@ class NavM2m
         curl_close($ch);
 
         if ($httpCode !== 200) {
-            $now = date('Y-m-d H:i:s');
-            throw new \Exception("HTTP error: ($now) {$httpCode} Response: {$response}");
+            throw new \Exception("HTTP error: {$httpCode} Response: {$response}");
         }
 
         $this->log("  NavM2m:sendRequest Received {$type} response from {$endpoint}: " . $response);
@@ -255,6 +258,7 @@ class NavM2m
      *     virusScanResultCode: string,
      *     resultCode: 'UPLOAD_SUCCESS' | 'HASH_FAILURE' | 'OTHER_ERROR',
      *     resultMessage: string,
+     *     correlationId: string,
      * }
      */
     public function addFile(string $file, string $signatureKey, string $accessToken)
@@ -271,6 +275,8 @@ class NavM2m
         $fileContent = $this->getXmlContent($file);
         $fileHash = hash('sha256', $fileContent);
         $messageId = $this->generateMessageId();
+        $correlationId = $this->generateMessageId();
+
         $signature = $this->generateSignature(
             messageId: $messageId,
             data: $fileHash,
@@ -288,8 +294,11 @@ class NavM2m
             endpoint: $endpoint,
             data: $data,
             messageId: $messageId,
+            correlationId: $correlationId,
             accessToken: $accessToken
         );
+
+        $response['correlationId'] = $correlationId;
 
         return $response;
     }
@@ -320,18 +329,21 @@ class NavM2m
      *     resultMessage: string,
      * }
      */
-    public function createDocument(string $fileId, string $accessToken)
+    public function createDocument(string $fileId, string $signatureKey, string $accessToken, string $correlationId = null)
     {
         $this->log('NavM2m:createDocument Creating document for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['createDocument'];
+
         $messageId = $this->generateMessageId();
         $signature = $this->generateSignature(
             messageId: $messageId,
             data: $fileId,
-            signatureKey: $fileId
+            signatureKey: $signatureKey,
+            type: 'binary'
         );
+
         $data = [
-            'documentField' => $fileId,
+            'documentFileId' => $fileId,
             'signature' => $signature
         ];
 
@@ -340,6 +352,7 @@ class NavM2m
             endpoint: $endpoint,
             data: $data,
             messageId: $messageId,
+            correlationId: $correlationId,
             accessToken: $accessToken
         );
         return $result;
@@ -364,7 +377,7 @@ class NavM2m
             signatureKey: $fileId
         );
         $data = [
-            'documentField' => $fileId,
+            'documentFileId' => $fileId,
             'signature' => $signature,
             "documentStatus" => "UNDER_SUBMIT"
         ];
