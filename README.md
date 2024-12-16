@@ -71,14 +71,23 @@ A felhasználó aktiválásához a következő lépéseket kell végrehajtani:
     // TODO el kell tárolni a username ($user['id]), password ($user['password']) és signingKey-t ($response['signatureKey']) az adatbázisban a userhez
     ```
 
+### Bizonylat beadás folyamata
+
+1. Token igénylése a `createToken()` függvény segítségével. Egy token 10 percig érvényes.
+2. Fájl feltöltése az `addFile()` függvény segítségével. A következő lépés feltétele, hogy a `result_code` legyen `UPLOAD_SUCCESS` és a `virusScanResultCode` legyen `PASSED`.
+   Ha nincs `virusScanResultCode` vagy az értéke`WAITING` , akkor **pár másodperc várakozás után** a fájl státuszát le kell kérdezni a `getFileStatus()` függvény segítségével.
+3. Bizonylat létrehozása a `createDocument()` függvény segítségével. A következő lépés feltétele, hogy a `result_code` legyen `CREATE_DOCUMENT_SUCCESS` és a `documentStatus` legyen `VALIDATED`.
+   Ha a `documentStatus` értéke `UNDER_PREVALIDATION` vagy `UNDER_VALIDATION`, akkor **pár másodperc várakozás** után a `getDocument()` függvény segítségével le kell kérdezni a bizonylat státuszát. (Ez még nincs implementálva)
+4. Bizonylat érkeztetése az `updateDocument()` függvény segítségével amely visszatérési értékében tartalmaz egy `arrivalNumber` értéket, amely a beküldés eredményét jelzi.
+   Ha a `documentStatus` értéke `UNDER_SUBMIT` akkor **pár másodperc várakozás** után a `getDocument()` függvény segítségével le kell kérdezni a bizonylat státuszát. (Ez még nincs implementálva)
+
 ### Fájl feltöltése
 
 Bizonylatfájl feltöltése:
 
 ```php
-$file = 'path/to/your/document.xml'; // A bizonylat XML fájl elérési útja
 $result = $navM2m->addFile(
-    file: './09teszt.xml',
+    file: 'bizonylat/xml/file/eleresi/utja',
     signatureKey: $user['signatureKey'],
     accessToken: $token['accessToken'],
 );
