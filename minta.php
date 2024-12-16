@@ -36,6 +36,7 @@ $user = [
 ];
 // INFO adatbázis faking vége
 
+$file = '/home/rrd/adatok2024/fejlesztes/nav-m2m/24T1042E.xml';
 $token = $navM2m->createToken($user);
 
 if ($token['resultCode'] != 'TOKEN_CREATION_SUCCESSFUL') {
@@ -46,7 +47,7 @@ if ($token['resultCode'] != 'TOKEN_CREATION_SUCCESSFUL') {
 
 if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
     $result = $navM2m->addFile(
-        file: './09teszt.xml',
+        file: $file,
         signatureKey: $user['signatureKey'],
         accessToken: $token['accessToken'],
     );
