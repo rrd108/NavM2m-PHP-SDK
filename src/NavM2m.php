@@ -272,7 +272,6 @@ class NavM2m
             messageId: $messageId,
             data: $fileHash,
             signatureKey: $signatureKey,
-            type: 'binary'
         );
 
         $data = ['fileContent' => $fileContent];
@@ -329,7 +328,6 @@ class NavM2m
             messageId: $messageId,
             data: $fileId,
             signatureKey: $signatureKey,
-            type: 'binary'
         );
 
         $data = [
@@ -366,7 +364,6 @@ class NavM2m
             messageId: $messageId,
             data: $fileId,
             signatureKey: $signatureKey,
-            type: 'binary'
         );
         $data = [
             'documentFileId' => $fileId,
@@ -398,15 +395,12 @@ class NavM2m
     }
 
 
-    protected function generateSignature(string $messageId, $data, string $signatureKey, string $type = 'text')
+    protected function generateSignature(string $messageId, $data, string $signatureKey)
     {
         $timestamp = $this->getCurrentUTCTimestamp();
         $signatureData = $messageId . $timestamp . $data . $signatureKey;
-        $this->log('  NavM2m:generateSignature Signature data: ' . $signatureData . ' (' . $type . ')');
-        if ($type == 'binary') {
-            return strtoupper(base64_encode(hash('sha256', $signatureData, true)));
-        }
-        return strtoupper(hash('sha256', $signatureData));
+        $this->log('  NavM2m:generateSignature Signature data: ' . $signatureData);
+        return strtoupper(base64_encode(hash('sha256', $signatureData, true)));
     }
 
     // UTC - approx valid for 1 minute, after that it will result with "invalid signature"

@@ -71,7 +71,7 @@ class NavM2mTest extends TestCase
         $data = '';
         $signatureKey = 'test_key';
         $timestamp = '20240101000000';
-        $expectedHash = 'E6E2803E2B4D68842267DDA92D3F4B53BC985813A9FE21E0C02F4774E0D82749';
+        $expectedHash = '5UKAPITNAIQIZ92PLT9LU7YYWBOP/IHGWC9HDODYJ0K=';
 
         // Create a mock object that returns fixed timestamp
         $navM2mMock = $this->getMockBuilder(NavM2m::class)
@@ -86,11 +86,7 @@ class NavM2mTest extends TestCase
         $reflection = new \ReflectionMethod(NavM2m::class, 'generateSignature');
         $reflection->setAccessible(true);
 
-        $result = $reflection->invoke($navM2mMock, $messageId, $data, $signatureKey, 'text');
-        $this->assertEquals($expectedHash, $result);
-
-        $expectedHash = '5UKAPITNAIQIZ92PLT9LU7YYWBOP/IHGWC9HDODYJ0K=';
-        $result = $reflection->invoke($navM2mMock, $messageId, $data, $signatureKey, 'binary');
+        $result = $reflection->invoke($navM2mMock, $messageId, $data, $signatureKey);
         $this->assertEquals($expectedHash, $result);
     }
 }
