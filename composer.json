@@ -4,7 +4,7 @@
   "type": "library",
   "version": "0.6.0",
   "require": {
-    "php": ">=8.1",
+    "php": ">=8.0",
     "ramsey/uuid": "^4.7",
     "vlucas/phpdotenv": "^5.5"
   },
