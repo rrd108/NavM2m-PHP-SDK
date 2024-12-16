@@ -67,9 +67,8 @@ A felhasználó aktiválásához a következő lépéseket kell végrehajtani:
 3.  **Felhasználó aktiválása:** Aktiválja a felhasználót, és megkapja a felhasználóhoz tartozó titkos aláírókulcsot:
 
     ```php
-    list($token, $signingKey) = $navM2m->activateUser($user, $token['accessToken']);
-    list($userName, $userPassword) = explode('-', $_ENV['NAV2M2M_USER_TEMPORARY_API_KEY']);
-    // TODO el kell tárolni a username, password és signingKey-t az adatbázisban a userhez, ezután a `NAV2M2M_USER_TEMPORARY_API_KEY` törölhető
+    $response = $navM2m->activateUser($user, $token['accessToken']);
+    // TODO el kell tárolni a username ($user['id]), password ($user['password']) és signingKey-t ($response['signatureKey']) az adatbázisban a userhez
     ```
 
 ### Fájl feltöltése

@@ -226,7 +226,7 @@ class NavM2m
         $data = ['signature' => $this->generateSignature(
             messageId: $messageId,
             data: '',
-            signatureKey: $signatureKey
+            signatureKey: $signatureKey,
         )];
         $response = $this->sendRequest(
             type: 'POST',

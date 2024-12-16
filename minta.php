@@ -17,15 +17,15 @@ $navM2m = new NavM2m(mode: 'sandbox', client: $client); // mode: 'production'
 $navM2m->logger = true;
 
 // INFO a $_ENV['NAV2M2M_USER_TEMPORARY_API_KEY'] a usernek az UPO-ról a user tárhelyére kiküldött API kulcs
-// user aktiválása - csak egyszer per user
+// INFO user aktiválása - csak egyszer per user
 /*
 $user = $navM2m->getInactiveUser($_ENV['NAV2M2M_USER_TEMPORARY_API_KEY']);
 $token = $navM2m->createToken($user);
-list($token, $signingKey) = $navM2m->activateUser($user, $token['accessToken']);
-print_r($token);
-print_r($signingKey);
+$response = $navM2m->activateUser($user, $token['accessToken']);
+print_r($response);
+die;
 */
-// TODO el kell tárolni a username, password és signingKey-t az adatbázisban a userhez
+// TODO el kell tárolni a username ($user['id]), password ($user['password']) és signingKey-t ($response['signatureKey']) az adatbázisban a userhez
 
 // TODO user adatainak lekérdezése az adatbázisból
 // INFO csak teszteléshez, mivel itt nincs adatbázis
