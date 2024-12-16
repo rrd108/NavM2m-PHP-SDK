@@ -64,12 +64,12 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
 
         if (!isset($result['virusScanResultCode'])) {
             // a vírus ellenőrzés tovább tartott mint 30 másodperc, külön le kell kérdezni
-            // sleep(30);
             $result = $navM2m->getFileStatus($fileId, $token['accessToken']);
             $result['virusScanResultCode'] = $result['resultCode'];
         }
 
         if ($result['virusScanResultCode'] == 'WAITING') {
+            // TODO a státusz lekérdezést meg kell később ismételni
             echo '👀 virusScanResultCode: WAITING' . "\n";
             die;
         }
@@ -98,7 +98,7 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
                 echo '👀 documentStatus: ' . $result['documentStatus'] . "\n";
                 if ($result['documentStatus'] == 'UNDER_PREVALIDATION' || $result['documentStatus'] == 'UNDER_VALIDATION') {
                     echo '👀 documentStatus: ' . $result['documentStatus'] . "\n";
-                    // TODO we have to wait for the document to be validated and then call the getDocument endpoint
+                    // TODO a getDocument endpoint hívással kell később ismét ellenőrizni - nincs még implementálva
                 }
             }
 
@@ -107,7 +107,7 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
 
                 if ($result['documentStatus'] != 'VALIDATED') {
                     echo '👀 documentStatus: ' . $result['documentStatus'] . "\n";
-                    // TODO we have to wait for the document to be validated and then call the getDocument endpoint
+                    // TODO a getDocument endpoint hívással kell később ismét ellenőrizni - nincs még implementálva
                 }
 
                 if ($result['documentStatus'] == 'VALIDATED') {
