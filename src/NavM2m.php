@@ -246,7 +246,7 @@ class NavM2m
     /**
      * @return array{
      *     fileId: string,
-     *     virusScanResultCode: string,
+     *     virusScanResultCode: 'PASSED' | 'FAILED' | 'WAITING' | 'OTHER_ERROR',
      *     resultCode: 'UPLOAD_SUCCESS' | 'HASH_FAILURE' | 'OTHER_ERROR',
      *     resultMessage: string,
      *     correlationId: string,
