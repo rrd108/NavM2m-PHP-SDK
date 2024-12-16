@@ -15,17 +15,18 @@ class NavM2m
     private $sandboxApiUrl = 'https://m2m-dev.nav.gov.hu/rest-api/1.1/';
     private $productionApiUrl = 'https://m2m.nav.gov.hu/rest-api/1.1/';
     private $endpoints = [
-        'createToken' => 'NavM2mCommon/tokenService/Token',
-        'userNonce' => 'NavM2mCommon/userregistrationService/Nonce',
-        'userActivation' => 'NavM2mCommon/userregistrationService/Activation',
         'addFile' => 'NavM2mCommon/filestoreUploadService/File',
-        'getFileStatus' => 'NavM2mDocument/filestoreDownloadService/File',
         'createDocument' => 'NavM2mDocument/documentService/Document',
+        'createToken' => 'NavM2mCommon/tokenService/Token',
+        'getDocument' => 'NavM2mDocument/documentService/Document',
+        'getFileStatus' => 'NavM2mDocument/filestoreDownloadService/File',
+        'userActivation' => 'NavM2mCommon/userregistrationService/Activation',
         'updateDocument' => 'NavM2mDocument/documentService/Document',
+        'userNonce' => 'NavM2mCommon/userregistrationService/Nonce',
     ];
     public $logger = false;
 
-    public function __construct(string $mode = 'sandbox', array $client)
+    public function __construct(string $mode = 'sandbox', array $client, bool $logger = false)
     {
         if (!$client['id'] || !$client['secret']) {
             throw new \Exception("Client ID, client secret, username and password are required");
@@ -35,6 +36,7 @@ class NavM2m
         $this->mode = $mode;
         $this->API_URL = $mode == 'production' ? $this->productionApiUrl : $this->sandboxApiUrl;
 
+        $this->logger = $logger;
         $this->log('NavM2m:constructor initialized in ' . $this->mode . ' mode');
     }
 
@@ -149,7 +151,7 @@ class NavM2m
         return json_decode($response, true);
     }
 
-    private function get(string $endpoint, string $messageId, string $accessToken = null)
+    private function get(string $endpoint, string $messageId, string $accessToken = null, string $correlationId = null)
     {
         $this->log('  NavM2m:get Sending GET request to ' . $endpoint);
 
@@ -159,6 +161,10 @@ class NavM2m
             'Content-Type: application/json',
             'messageId: ' . $messageId
         ];
+
+        if ($correlationId) {
+            $headers[] = 'correlationId: ' . $correlationId;
+        }
 
         $this->log('  NavM2m:get Headers: ' . json_encode($headers));
 
@@ -376,6 +382,28 @@ class NavM2m
             data: $data,
             messageId: $messageId,
             accessToken: $accessToken
+        );
+    }
+
+    /**
+     * @return array{
+     *     arrivalNumber?: string,
+     *     documentFileId?: string,
+     *     errors?: string,
+     *     documentStatus?: 'UNDER_PREVALIDATION' | 'PREVALIDATION_ERROR' | 'UNDER_VALIDATION' | 'VALIDATION_ERROR' | 'VALIDATED' | 'UNDER_SUBMIT' | 'SUBMIT_ERROR' | 'SUBMITTED',
+     *     resultCode: 'GET_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'OTHER_ERROR',
+     *     resultMessage?: string
+     * }
+     */
+    public function getDocument(string $fileId, string $accessToken, string $correlationId = null)
+    {
+        $this->log('NavM2m:getDocument Getting document for ' . $fileId);
+        $endpoint = $this->API_URL . $this->endpoints['getDocument'] . '/' . $fileId;
+        return $this->get(
+            endpoint: $endpoint,
+            messageId: $this->generateMessageId(),
+            accessToken: $accessToken,
+            correlationId: $correlationId
         );
     }
 

@@ -13,8 +13,7 @@ $client = [
     'id' => $_ENV['NAV2M2M_CLIENT_ID'], // a kliens program azonosítója az UPO-nál
     'secret' => $_ENV['NAV2M2M_CLIENT_SECRET'], // a kliens program titkos kulcsa az UPO-nál
 ];
-$navM2m = new NavM2m(mode: 'sandbox', client: $client); // mode: 'production'
-$navM2m->logger = true;
+$navM2m = new NavM2m(mode: 'sandbox', client: $client, logger: true); // mode: 'production'
 
 // INFO a $_ENV['NAV2M2M_USER_TEMPORARY_API_KEY'] a usernek az UPO-ról a user tárhelyére kiküldött API kulcs
 // INFO user aktiválása - csak egyszer per user
@@ -69,7 +68,7 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
         }
 
         if ($result['virusScanResultCode'] == 'WAITING') {
-            // TODO a státusz lekérdezést meg kell később ismételni
+            // TODO a státusz lekérdezést meg kell pár másodperccel később ismételni getFileStatus() hívással
             echo '👀 virusScanResultCode: WAITING' . "\n";
             die;
         }
@@ -98,7 +97,8 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
                 echo '👀 documentStatus: ' . $result['documentStatus'] . "\n";
                 if ($result['documentStatus'] == 'UNDER_PREVALIDATION' || $result['documentStatus'] == 'UNDER_VALIDATION') {
                     echo '👀 documentStatus: ' . $result['documentStatus'] . "\n";
-                    // TODO a getDocument endpoint hívással kell később ismét ellenőrizni - nincs még implementálva
+                    // TODO a getDocument endpoint hívással kell pár másodperccel később ismét ellenőrizni
+                    $result = $navM2m->getDocument($fileId, $token['accessToken'], $correlationId);
                 }
             }
 
@@ -107,7 +107,7 @@ if ($token['resultCode'] == 'TOKEN_CREATION_SUCCESSFUL') {
 
                 if ($result['documentStatus'] != 'VALIDATED') {
                     echo '👀 documentStatus: ' . $result['documentStatus'] . "\n";
-                    // TODO a getDocument endpoint hívással kell később ismét ellenőrizni - nincs még implementálva
+                    // TODO a getDocument endpoint hívással kell pár másodperccel később ismét ellenőrizni
                 }
 
                 if ($result['documentStatus'] == 'VALIDATED') {

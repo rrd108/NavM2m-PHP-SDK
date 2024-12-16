@@ -36,7 +36,7 @@ $client = [
     'secret' => $_ENV['NAV2M2M_CLIENT_SECRET'], // a kliens program titkos kulcsa az UPO-nál
 ];
 
-$navM2m = new NavM2m(mode: 'sandbox', client: $client); // tesztkörnyezet
+$navM2m = new NavM2m(mode: 'sandbox', client: $client, logger: true); // tesztkörnyezet
 // vagy
 $navM2m = new NavM2m(mode: 'production', client: $client); // éles környezet
 ```
@@ -77,9 +77,9 @@ A felhasználó aktiválásához a következő lépéseket kell végrehajtani:
 2. Fájl feltöltése az `addFile()` függvény segítségével. A következő lépés feltétele, hogy a `result_code` legyen `UPLOAD_SUCCESS` és a `virusScanResultCode` legyen `PASSED`.
    Ha nincs `virusScanResultCode` vagy az értéke`WAITING` , akkor **pár másodperc várakozás után** a fájl státuszát le kell kérdezni a `getFileStatus()` függvény segítségével.
 3. Bizonylat létrehozása a `createDocument()` függvény segítségével. A következő lépés feltétele, hogy a `result_code` legyen `CREATE_DOCUMENT_SUCCESS` és a `documentStatus` legyen `VALIDATED`.
-   Ha a `documentStatus` értéke `UNDER_PREVALIDATION` vagy `UNDER_VALIDATION`, akkor **pár másodperc várakozás** után a `getDocument()` függvény segítségével le kell kérdezni a bizonylat státuszát. (Ez még nincs implementálva)
+   Ha a `documentStatus` értéke `UNDER_PREVALIDATION` vagy `UNDER_VALIDATION`, akkor **pár másodperc várakozás** után a `getDocument()` függvény segítségével le kell kérdezni a bizonylat státuszát.
 4. Bizonylat érkeztetése az `updateDocument()` függvény segítségével amely visszatérési értékében tartalmaz egy `arrivalNumber` értéket, amely a beküldés eredményét jelzi.
-   Ha a `documentStatus` értéke `UNDER_SUBMIT` akkor **pár másodperc várakozás** után a `getDocument()` függvény segítségével le kell kérdezni a bizonylat státuszát. (Ez még nincs implementálva)
+   Ha a `documentStatus` értéke `UNDER_SUBMIT` akkor **pár másodperc várakozás** után a `getDocument()` függvény segítségével le kell kérdezni a bizonylat státuszát.
 
 ### Fájl feltöltése
 
@@ -134,7 +134,7 @@ A log kiírja a képernyőre a kéréseket és a válaszokat, ami hasznos lehet 
 A loggolást az objektum létrehozásakor be kapcsolhatod, alapértelmezetten ki van kapcsolva.
 
 ```php
-$navM2m->logger = true;
+$navM2m = new NavM2m(mode: 'sandbox', client: $client, logger: true);
 ```
 
 ## Támogatás
