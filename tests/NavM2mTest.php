@@ -59,13 +59,14 @@ class NavM2mTest extends TestCase
         };
 
         $fixturesPath = __DIR__ . '/fixtures/';
+        $schemaFile = __DIR__ . '/../resources/schema.xsd';
 
-        $this->assertTrue($navM2mTest->isValidXML($fixturesPath . '09teszt.xml', $fixturesPath . 'schema.xsd'));
-        $this->assertFalse($navM2mTest->isValidXML($fixturesPath . 'invalid.xml', $fixturesPath . 'schema.xsd'));
+        $this->assertTrue($navM2mTest->isValidXML($fixturesPath . 'valid.xml', $schemaFile));
+        $this->assertFalse($navM2mTest->isValidXML($fixturesPath . 'invalid.xml', $schemaFile));
     }
 
     #[Test]
-    public function testGenerateSignatureWithEmptyData(): void
+    public function testGenerateSignature(): void
     {
         $messageId = '123e4567-e89b-12d3-a456-426614174000';
         $data = '';
@@ -88,5 +89,16 @@ class NavM2mTest extends TestCase
 
         $result = $reflection->invoke($navM2mMock, $messageId, $data, $signatureKey);
         $this->assertEquals($expectedHash, $result);
+
+        // example from the docs
+        /*
+        $messageId = '7eae9ecf-f735-4a4f-aa49-e85ea411a313';
+        $timestamp = '20240510123847';
+        $data = '26549118-0ddc-4e30-81bc-eaddd6f54b21';
+        $signatureKey = 'FA12BC4567CA12BC4588';
+        $expectedHash = '2e81f124c0ee66be1e4cca1af72eb198b1a1c02ad1dffa0943a4fa8db0e440e8';
+        $result = $reflection->invoke($navM2mMock, $messageId, $data, $signatureKey);
+        $this->assertEquals($expectedHash, $result);
+        */
     }
 }

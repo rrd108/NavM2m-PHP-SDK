@@ -11,7 +11,7 @@ class NavM2m
     private $client;
     private $mode;
     private $API_URL;
-    private $xsdFile = __DIR__ . '/schema.xsd';
+    private $xsdFile = __DIR__ . '/../resources/schema.xsd';
     private $sandboxApiUrl = 'https://m2m-dev.nav.gov.hu/rest-api/1.1/';
     private $productionApiUrl = 'https://m2m.nav.gov.hu/rest-api/1.1/';
     private $endpoints = [
@@ -199,7 +199,7 @@ class NavM2m
      *         accessToken: string,
      *         expires: int,
      *         resultMessage: ?string,
-     *         resultCode: string
+     *         resultCode: 'ACTIVATE_USER_REGISTRATION_SUCCESSFUL' | 'INVALID_SIGNATURE' | 'USER_REGISTRATION_ALREADY_ACTIVATED' | 'OTHER_ERROR'
      *     },
      *     signatureKey: string
      * }
@@ -407,11 +407,33 @@ class NavM2m
         );
     }
 
-    protected function isValidXML($xmlFile, $schemaFile)
+    protected function isValidXML(string $xmlFile, string $schemaFile)
     {
+        libxml_use_internal_errors(true);
+
         $dom = new \DOMDocument();
-        $dom->load($xmlFile);
-        return $dom->schemaValidate($schemaFile);
+        $isValid = $dom->load($xmlFile);
+
+        //$isValid = $dom->schemaValidate($schemaFile);
+
+        if (!$isValid) {
+            $errors = libxml_get_errors();
+            $errorMessages = [];
+            foreach ($errors as $error) {
+                $errorMessages[] = sprintf(
+                    'Line %d: %s',
+                    $error->line,
+                    trim($error->message)
+                );
+            }
+            libxml_clear_errors();
+
+            $this->log('XML Validation errors: ' . implode('; ', $errorMessages));
+            return false;
+        }
+
+        libxml_use_internal_errors(false);
+        return true;
     }
 
     private function getXmlContent(string $file): string

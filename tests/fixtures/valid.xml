@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <nyomtatvanyok xmlns="http://www.apeh.hu/abev/nyomtatvanyok/2005/01">
+  <abev>
+    <hibakszama>0</hibakszama>
+    <hash>2850597c376407320851d704485c466ac8ff09f3</hash>
+    <programverzio>v.3.35.0</programverzio>
+  </abev>
+  <nyomtatvany>
+    <nyomtatvanyinformacio>
+      <nyomtatvanyazonosito>24T1042E</nyomtatvanyazonosito>
+      <nyomtatvanyverzio>3.0</nyomtatvanyverzio>
+      <adozo>
+        <adoszam>108108108108</adoszam>
+      </adozo>
+    </nyomtatvanyinformacio>
+    <mezok>
+      <mezo eazon="0A0001C0001AA">108108108108</mezo>
+      <mezo eazon="0A0001D0003AA">1</mezo>
+      <mezo eazon="0A0001E001A">Radharadhya Dasa</mezo>
+      <mezo eazon="0A0001E002A">85540002</mezo>
+      <mezo eazon="0B0001A001A">1</mezo>
+      <mezo eazon="0B0001B001A">108108108108</mezo>
+      <mezo eazon="0B0001C0001AA">Radharadhya Dasa</mezo>
+      <mezo eazon="0B0001C0002AA">8888888888</mezo>
+      <mezo eazon="0B0001C0003AA">090090090</mezo>
+      <mezo eazon="0B0001D0005AA">U</mezo>
+      <mezo eazon="0B0001D0007AA">07</mezo>
+      <mezo eazon="0B0001D0008AA">20241226</mezo>
+      <mezo eazon="0B0001D0009AA">1</mezo>
+    </mezok>
+  </nyomtatvany>
+</nyomtatvanyok>
