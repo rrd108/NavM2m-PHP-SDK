@@ -88,8 +88,9 @@ git add "$COMPOSER_FILE"
 git commit -m "Bump version to v${new_version}"
 
 # 8. Create Git Tag
-git tag "v${new_version}" -m "Release v${new_version}"
-ok_echo "Git tag created: v${new_version}"
+release_notes=$(generate_release_notes)
+git tag -a "v${new_version}" -m "Release v${new_version}" -m "$release_notes"
+ok_echo "Git tag created: v${new_version} with release notes"
 
 # 9. Push to git (with tags)
 git push origin "$GIT_BRANCH" --tags
@@ -97,3 +98,29 @@ ok_echo "Pushed changes to origin with tags."
 
 # 10. Done Message
 ok_echo "Successfully released v${new_version} of $PACKAGE_NAME!"
+
+# Function to generate release notes
+generate_release_notes() {
+    local previous_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+    local range="${previous_tag}..HEAD"
+    
+    echo "### Release Notes for v${new_version}"
+    echo
+    
+    # Get commits excluding chore and format them by type
+    git log "$range" --pretty=format:"%s" | while read -r commit; do
+        # Skip chore commits
+        if [[ $commit == chore:* ]]; then
+            continue
+        fi
+        
+        # Extract type and message
+        if [[ $commit =~ ^([a-z]+)(\([^)]+\))?!?:[[:space:]](.+)$ ]]; then
+            type="${BASH_REMATCH[1]}"
+            scope="${BASH_REMATCH[2]}"
+            message="${BASH_REMATCH[3]}"
+            
+            echo "- **${type}${scope}:** ${message}"
+        fi
+    done
+}
