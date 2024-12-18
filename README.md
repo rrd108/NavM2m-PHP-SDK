@@ -9,7 +9,7 @@ Ha a csomag hasznos volt a számodra, akkor nyomj rá a star-ra!
 1.  **Composer használata:** A legkényelmesebb mód az SDK telepítésére a Composer használata:
 
     ```bash
-    composer require rrd108/nav-m2m-php
+    composer require rrd108/nav-m2m
     ```
 
 2.  **Követelmények:**
