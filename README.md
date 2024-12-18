@@ -81,6 +81,64 @@ A felhasználó aktiválásához a következő lépéseket kell végrehajtani:
 4. Bizonylat érkeztetése az `updateDocument()` függvény segítségével amely visszatérési értékében tartalmaz egy `arrivalNumber` értéket, amely a beküldés eredményét jelzi.
    Ha a `documentStatus` értéke `UNDER_SUBMIT` akkor **pár másodperc várakozás** után a `getDocument()` függvény segítségével le kell kérdezni a bizonylat státuszát.
 
+#### A bizonylatokkal kapcsolatos kommunikáció DB-ban való tárolásához a következő mezőkre van szükség
+
+- `fileId`: 36 karakter - a bizonylat feltöltésekor megkapott egyedi azonosító
+- `correlationId`: 36 karakter - a bizonylat feltöltésekor generált egyedi azonosító
+- `status` max 19 karakter - a bizonylat aktuális státusza
+  | Kód | Jelentés |
+  |-----|----------|
+  | UNDER_PREVALIDATION | A bizonylat előellenőrzése folyamatban van. Az előellenőrzés az adózók, a jogosultság és a bizonylat alapvető megfelelőségét vizsgálja. |
+  | PREVALIDATION_ERROR | A bizonylat előellenőrzése során hibát talált a rendszer. Ilyen esetben az errors mező nincs kitöltve, mivel az csak a tartalmi hibákat tartalmazza. |
+  | UNDER_VALIDATION | A bizonylat tartalmi ellenőrzése folyamatban van. A tartalmi ellenőrzés során a bizonylat megfelelő kitöltését és csatolmányokat vizsgálja a rendszer. |
+  | VALIDATION_ERROR | A bizonylat tartalmi ellenőrzése során hibát talált a rendszer. A hibalista.xsd-nek megfelelő formátumú errors mezőben találhatók a hibák. |
+  | VALIDATED | A bizonylat megfelelően lett kitöltve, és a csatolmányai is rendben vannak. |
+  | UNDER_SUBMIT | A bizonylat beküldése folyamatban van. |
+  | SUBMIT_ERROR | A bizonylat beküldése sikertelen. Abban az esetben érdemes ebben az állapotban ismételt beküldést kérni, ha a hivatali kapu nem volt elérhető. |
+  | SUBMITTED | A bizonylat sikeresen be lett küldve. |
+- `result` max 24 karakter - a legutolsó API hívás eredménye
+  | Művelet | Kód | Jelentés |
+  |---------|-----|---------|
+  | `addFile` | UPLOAD_SUCCESS | Sikeres fájl feltöltés. Nem jelenti azt, hogy a fájl nem vírusos. |
+  | `addFile` | HASH_FAILURE | A fájl-ról képzett sha256 hash nem egyezik a paraméterben megadottal. |
+  | `addFile` | OTHER_ERROR | Egyéb hiba következett be a feltöltés során. |
+  | `createDocument` | CREATE_DOCUMENT_SUCCESS | A bizonylat létrehozása sikeresen megtörtént. A tartalmi validáció elindult. |
+  | `createDocument` | UNKNOWN_FILE_ID | A megadott azonosítóval nem található fájl a fájltárolóban. |
+  | `createDocument` | FILE_ID_ALREADY_USED | A megadott fájltárolóbeli fájlazonosítóval már létezik bizonylat. |
+  | `createDocument` | UNSUCCESSFUL_VALIDATION | A validáció valamilyen hiba miatt nem tudott lefutni. |
+  | `createDocument` | INVALID_SENDER | Érvénytelen beküldő. |
+  | `createDocument` | INVALID_TAXPAYER | Érvénytelen adózó. |
+  | `createDocument` | SENDER_HAS_NO_RIGHT | A beküldőnek nincs jogosultsága a bizonylat beküldésére az adózó nevében. |
+  | `createDocument` | INVALID_DOCUMENT_TYPE | A bizonylattípus nem küldhető be. |
+  | `createDocument` | INVALID_DOCUMENT_VERSION | A bizonylatverzió nem küldhető be. |
+  | `createDocument` | FILE_CONTAINS_VIRUS | A bizonylatfájl, vagy annak csatolmánya vírusos. |
+  | `createDocument` | INVALID_SIGNATURE | Érvénytelen aláírás. |
+  | `createDocument` | OTHER_ERROR | Egyéb hiba. |
+  | `updateDocument` | UPDATE_DOCUMENT_SUCCESS | A bizonylat módosítása sikeresen megtörtént. |
+  | `updateDocument` | UNKNOWN_FILE_ID | A megadott azonosítóval nem található fájl a fájltárolóban. |
+  | `updateDocument` | STATUS_CHANGE_NOT_ENABLED | A bizonylat aktuális státuszából, a bizonylat módosítás kérésben megadott státuszba nem engedélyezett az átmenet. |
+  | `updateDocument` | SUBMIT_ERROR | A bizonylat beküldése sikertelen. |
+  | `updateDocument` | TOO_BIG_KR_FILE | A KR fájl mérete meghaladja a beküldési limitet |
+  | `updateDocument` | INVALID_SENDER | Érvénytelen beküldő. |
+  | `updateDocument` | INVALID_TAXPAYER | Érvénytelen adózó. |
+  | `updateDocument` | SENDER_HAS_NO_RIGHT | A beküldőnek nincs jogosultsága a bizonylat beküldésére az adózó nevében. |
+  | `updateDocument` | INVALID_DOCUMENT_TYPE | A bizonylattípus nem küldhető be. |
+  | `updateDocument` | INVALID_DOCUMENT_VERSION | A bizonylatverzió nem küldhető be. |
+  | `updateDocument` | INVALID_SIGNATURE | Érvénytelen aláírás. |
+  | `updateDocument` | OTHER_ERROR | Egyéb hiba. |
+  | `getDocument` | GET_DOCUMENT_SUCCESS | A bizonylatadatok lekérdezése sikeresen megtörtént. |
+  | `getDocument` | UNKNOWN_FILE_ID | A megadott azonosítóval nem található fájl a fájltárolóban. |
+  | `getDocument` | OTHER_ERROR | Egyéb hiba |
+- `virusScanResultCode`: max 11 karakter - a bizonylat feltöltésekor végrehajtott víruskeresés eredménye
+  | Kód | Jelentés |
+  |-----|----------|
+  | PASSED | Sikeres fájl feltöltés. |
+  | FAILED | A fájl-ról képzett sha256 hash nem egyezik a paraméterben megadottal. |
+  | WAITING | A vírusellenőrzés még folyamatban van. |
+  | OTHER_ERROR | Egyéb hiba következett be a feltöltés során. |
+- `arrivalNumber` minimum 27 karakter - a bizonylat érkeztetésekor megkapott egyedi azonosító
+- `errors` - a hibákat tartalmazó xml fájl bzip2-vel tömörítve. Az xml a hibalista.xsd-vel dolgozható fel.
+
 ### Fájl feltöltése
 
 Bizonylatfájl feltöltése:
