@@ -356,7 +356,6 @@ class NavM2m
      * @return array{
      *     arrivalNumber: string,
      *     documentStatus: 'UNDER_PREVALIDATION' | 'PREVALIDATION_ERROR' | 'UNDER_VALIDATION' | 'VALIDATION_ERROR' | 'VALIDATED' | 'UNDER_SUBMIT' | 'SUBMIT_ERROR' | 'SUBMITTED',
-     *     errors: string,
      *     resultCode: 'UPDATE_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'STATUS_CHANGE_NOT_ENABLED' | 'SUBMIT_ERROR' | 'TOO_BIG_KR_FILE', 'INVALID_SENDER', 'INVALID_TAXPAYER' | 'SENDER_HAS_NO_RIGHT' | 'INVALID_DOCUMENT_TYPE' | 'INVALID_DOCUMENT_VERSION' | 'INVALID_SIGNATURE' | 'OTHER_ERROR',
      *     resultMessage: string,
      * }
