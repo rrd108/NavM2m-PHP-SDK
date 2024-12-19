@@ -1,44 +1,63 @@
 #!/bin/bash
 
-set -e
-
 PACKAGE_NAME="rrd108/nav-m2m"
 TEST_COMMAND="composer test"
 COMPOSER_FILE="composer.json"
 GIT_BRANCH="main"
 
-
-# --- Helper ---
+# --- Helper Functions ---
 get_current_version() {
-  jq -r '.version' "$COMPOSER_FILE"
+    jq -r '.version' "$COMPOSER_FILE"
+}
+
+generate_release_notes() {
+    previous_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+    range="${previous_tag}..HEAD"
+    
+    echo "### Release Notes for v${new_version}"
+    echo
+    
+    git log "$range" --pretty=format:"%s" | while read -r commit; do
+        # Skip chore commits
+        case "$commit" in
+            chore:*) continue ;;
+        esac
+        
+        type=$(echo "$commit" | sed -n 's/^\([a-z]\+\)(\([^)]\+\))\!*: \(.*\)/\1/p')
+        scope=$(echo "$commit" | sed -n 's/^\([a-z]\+\)(\([^)]\+\))\!*: \(.*\)/\2/p')
+        message=$(echo "$commit" | sed -n 's/^\([a-z]\+\)(\([^)]\+\))\!*: \(.*\)/\3/p')
+        
+        if [ -n "$type" ]; then
+            echo "- **${type}(${scope}):** ${message}"
+        fi
+    done
 }
 
 # --- Colors ---
 GREEN='\033[0;32m'
+NC='\033[0m'
 RED='\033[0;31m'
-NC='\033[0m' # No Color
 
 # --- Colored Echo ---
 ok_echo() {
-  echo -e "${GREEN}$*${NC}"
+    printf "${GREEN}%s${NC}\n" "$*"
 }
 
 error_echo() {
-  echo -e "${RED}$*${NC}"
+    printf "${RED}%s${NC}\n" "$*"
 }
-
 
 # 1. Parse command-line arguments
 if [ "$#" -ne 1 ]; then
-  error_echo "Usage: $0 <patch|minor|major>"
-  exit 1
+    error_echo "Usage: $0 <patch|minor|major>"
+    exit 1
 fi
 release_type="$1"
 
 # 2. Validate release type
 case "$release_type" in
-  "patch" | "minor" | "major" ) ;;
-  *) error_echo "Invalid release type. Please choose patch, minor, or major."; exit 1 ;;
+    "patch"|"minor"|"major") ;;
+    *) error_echo "Invalid release type. Please choose patch, minor, or major."; exit 1 ;;
 esac
 
 # 3. Get the Current Version
@@ -47,41 +66,38 @@ ok_echo "Current version: $current_version"
 
 # 4. Run Tests
 echo "Running tests..."
-$TEST_COMMAND
-
-if [ $? -ne 0 ]; then
-  error_echo "Tests failed. Release aborted."
-  exit 1
+if ! $TEST_COMMAND; then
+    error_echo "Tests failed. Release aborted."
+    exit 1
 fi
-
 ok_echo "Tests passed."
 
 # 5. Increment Version
-IFS="." read -r major minor patch <<< "$current_version"
+major=$(echo "$current_version" | cut -d. -f1)
+minor=$(echo "$current_version" | cut -d. -f2)
+patch=$(echo "$current_version" | cut -d. -f3)
 
 case "$release_type" in
     "patch")
-      ((patch++))
-    ;;
+        patch=$((patch + 1))
+        ;;
     "minor")
-      ((minor++))
-      patch=0
-    ;;
+        minor=$((minor + 1))
+        patch=0
+        ;;
     "major")
-      ((major++))
-      minor=0
-      patch=0
-    ;;
+        major=$((major + 1))
+        minor=0
+        patch=0
+        ;;
 esac
 
 new_version="$major.$minor.$patch"
-
 ok_echo "New version: $new_version"
 
 # 6. Update composer.json
 jq --arg new_version "$new_version" '.version = $new_version' "$COMPOSER_FILE" > temp.json && mv temp.json "$COMPOSER_FILE"
 ok_echo "composer.json updated."
-
 
 # 7. Commit Changes
 git add "$COMPOSER_FILE"
@@ -98,29 +114,3 @@ ok_echo "Pushed changes to origin with tags."
 
 # 10. Done Message
 ok_echo "Successfully released v${new_version} of $PACKAGE_NAME!"
-
-# Function to generate release notes
-generate_release_notes() {
-    local previous_tag=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
-    local range="${previous_tag}..HEAD"
-    
-    echo "### Release Notes for v${new_version}"
-    echo
-    
-    # Get commits excluding chore and format them by type
-    git log "$range" --pretty=format:"%s" | while read -r commit; do
-        # Skip chore commits
-        if [[ $commit == chore:* ]]; then
-            continue
-        fi
-        
-        # Extract type and message
-        if [[ $commit =~ ^([a-z]+)(\([^)]+\))?!?:[[:space:]](.+)$ ]]; then
-            type="${BASH_REMATCH[1]}"
-            scope="${BASH_REMATCH[2]}"
-            message="${BASH_REMATCH[3]}"
-            
-            echo "- **${type}${scope}:** ${message}"
-        fi
-    done
-}
