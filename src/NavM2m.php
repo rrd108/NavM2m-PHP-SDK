@@ -62,8 +62,8 @@ class NavM2m
 
     /**
      * @return array{
-     *     accessToken: string,
-     *     expires: int,
+     *     accessToken?: string,
+     *     expires?: int,
      *     resultMessage?: string,
      *     resultCode: 'TOKEN_CREATION_SUCCESSFUL' | 'TOKEN_CREATION_FAILED'
      * }
@@ -196,9 +196,9 @@ class NavM2m
     /**
      * @return array{
      *     token: array{
-     *         accessToken: string,
-     *         expires: int,
-     *         resultMessage: ?string,
+     *         accessToken?: string,
+     *         expires?: int,
+     *         resultMessage?: string,
      *         resultCode: 'ACTIVATE_USER_REGISTRATION_SUCCESSFUL' | 'INVALID_SIGNATURE' | 'USER_REGISTRATION_ALREADY_ACTIVATED' | 'OTHER_ERROR'
      *     },
      *     signatureKey: string
@@ -251,11 +251,10 @@ class NavM2m
 
     /**
      * @return array{
-     *     fileId: string,
+     *     fileId?: string,
      *     virusScanResultCode: 'PASSED' | 'FAILED' | 'WAITING' | 'OTHER_ERROR',
      *     resultCode: 'UPLOAD_SUCCESS' | 'HASH_FAILURE' | 'OTHER_ERROR',
-     *     resultMessage: string,
-     *     correlationId: string,
+     *     resultMessage?: string,
      * }
      */
     public function addFile(string $file, string $signatureKey, string $accessToken)
@@ -302,7 +301,7 @@ class NavM2m
      * @return array{
      *     retentionTime: string,
      *     resultCode: 'PASSED' | 'FAILED' | 'WAITING' | 'OTHER_ERROR',
-     *     resultMessage: string,
+     *     resultMessage?: string,
      * }
      */
     public function getFileStatus(string $fileId, string $accessToken)
@@ -354,10 +353,10 @@ class NavM2m
 
     /**
      * @return array{
-     *     arrivalNumber: string,
-     *     documentStatus: 'UNDER_PREVALIDATION' | 'PREVALIDATION_ERROR' | 'UNDER_VALIDATION' | 'VALIDATION_ERROR' | 'VALIDATED' | 'UNDER_SUBMIT' | 'SUBMIT_ERROR' | 'SUBMITTED',
+     *     arrivalNumber?: string,
+     *     documentStatus?: 'UNDER_PREVALIDATION' | 'PREVALIDATION_ERROR' | 'UNDER_VALIDATION' | 'VALIDATION_ERROR' | 'VALIDATED' | 'UNDER_SUBMIT' | 'SUBMIT_ERROR' | 'SUBMITTED',
      *     resultCode: 'UPDATE_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'STATUS_CHANGE_NOT_ENABLED' | 'SUBMIT_ERROR' | 'TOO_BIG_KR_FILE', 'INVALID_SENDER', 'INVALID_TAXPAYER' | 'SENDER_HAS_NO_RIGHT' | 'INVALID_DOCUMENT_TYPE' | 'INVALID_DOCUMENT_VERSION' | 'INVALID_SIGNATURE' | 'OTHER_ERROR',
-     *     resultMessage: string,
+     *     resultMessage?: string,
      * }
      */
     public function updateDocument(string $fileId, string $signatureKey, string $accessToken, string $correlationId = null)
