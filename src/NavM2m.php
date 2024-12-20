@@ -48,7 +48,7 @@ class NavM2m
      *     nonce: string
      * }
      */
-    public function getInactiveUser(string $temporaryUserApiKey)
+    public function getInactiveUser(string $temporaryUserApiKey): array
     {
         $this->log('NavM2m:getInactiveUser Getting inactive user with temporary user API key: ' . $temporaryUserApiKey);
         $data = explode('-', $temporaryUserApiKey);
@@ -204,7 +204,7 @@ class NavM2m
      *     signatureKey: string
      * }
      */
-    public function activateUser(array $user, string $accessToken)
+    public function activateUser(array $user, string $accessToken): array
     {
         $this->log('NavM2m:activateUser Activating user with nonce: ' . $user['nonce']);
         $endpoint = $this->API_URL . $this->endpoints['userNonce'];
@@ -257,7 +257,7 @@ class NavM2m
      *     resultMessage?: string,
      * }
      */
-    public function addFile(string $file, string $signatureKey, string $accessToken)
+    public function addFile(string $file, string $signatureKey, string $accessToken): array
     {
         $this->log('NavM2m:addFile Adding file: ' . $file);
         if (!file_exists($file)) {
@@ -304,7 +304,7 @@ class NavM2m
      *     resultMessage?: string,
      * }
      */
-    public function getFileStatus(string $fileId, string $accessToken)
+    public function getFileStatus(string $fileId, string $accessToken): array
     {
         $this->log('NavM2m:getFileStatus for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['getFileStatus'] . '?fileId=' . $fileId;
@@ -323,7 +323,7 @@ class NavM2m
      *     resultMessage: string,
      * }
      */
-    public function createDocument(string $fileId, string $signatureKey, string $accessToken, string $correlationId = null)
+    public function createDocument(string $fileId, string $signatureKey, string $accessToken, string $correlationId = null): array
     {
         $this->log('NavM2m:createDocument Creating document for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['createDocument'];
@@ -359,7 +359,7 @@ class NavM2m
      *     resultMessage?: string,
      * }
      */
-    public function updateDocument(string $fileId, string $signatureKey, string $accessToken, string $correlationId = null)
+    public function updateDocument(string $fileId, string $signatureKey, string $accessToken, string $correlationId = null): array
     {
         $this->log('NavM2m:updateDocument Updating document for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['updateDocument'];
@@ -393,7 +393,7 @@ class NavM2m
      *     resultMessage?: string
      * }
      */
-    public function getDocument(string $fileId, string $accessToken, string $correlationId = null)
+    public function getDocument(string $fileId, string $accessToken, string $correlationId = null): array
     {
         $this->log('NavM2m:getDocument Getting document for ' . $fileId);
         $endpoint = $this->API_URL . $this->endpoints['getDocument'] . '/' . $fileId;
