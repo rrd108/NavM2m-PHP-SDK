@@ -257,6 +257,7 @@ class NavM2m
     /**
      * @return array{
      *     fileId?: string,
+     *     correlationId?: string,
      *     virusScanResultCode: 'PASSED' 
      *      | 'FAILED' 
      *      | 'WAITING' 
