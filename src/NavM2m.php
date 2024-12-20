@@ -65,7 +65,9 @@ class NavM2m
      *     accessToken?: string,
      *     expires?: int,
      *     resultMessage?: string,
-     *     resultCode: 'TOKEN_CREATION_SUCCESSFUL' | 'TOKEN_CREATION_FAILED'
+     *     resultCode: 'TOKEN_CREATION_SUCCESSFUL' 
+     *      | 'TOKEN_CREATION_FAILED' 
+     *      | 'OTHER_ERROR'
      * }
      */
     public function createToken(array $user): array
@@ -199,7 +201,10 @@ class NavM2m
      *         accessToken?: string,
      *         expires?: int,
      *         resultMessage?: string,
-     *         resultCode: 'ACTIVATE_USER_REGISTRATION_SUCCESSFUL' | 'INVALID_SIGNATURE' | 'USER_REGISTRATION_ALREADY_ACTIVATED' | 'OTHER_ERROR'
+     *         resultCode: 'ACTIVATE_USER_REGISTRATION_SUCCESSFUL' 
+     *          | 'INVALID_SIGNATURE' 
+     *          | 'USER_REGISTRATION_ALREADY_ACTIVATED' 
+     *          | 'OTHER_ERROR'
      *     },
      *     signatureKey: string
      * }
@@ -252,8 +257,13 @@ class NavM2m
     /**
      * @return array{
      *     fileId?: string,
-     *     virusScanResultCode: 'PASSED' | 'FAILED' | 'WAITING' | 'OTHER_ERROR',
-     *     resultCode: 'UPLOAD_SUCCESS' | 'HASH_FAILURE' | 'OTHER_ERROR',
+     *     virusScanResultCode: 'PASSED' 
+     *      | 'FAILED' 
+     *      | 'WAITING' 
+     *      | 'OTHER_ERROR',
+     *     resultCode: 'UPLOAD_SUCCESS' 
+     *      | 'HASH_FAILURE' 
+     *      | 'OTHER_ERROR',
      *     resultMessage?: string,
      * }
      */
@@ -300,7 +310,10 @@ class NavM2m
     /**
      * @return array{
      *     retentionTime: string,
-     *     resultCode: 'PASSED' | 'FAILED' | 'WAITING' | 'OTHER_ERROR',
+     *     resultCode: 'PASSED' 
+     *      | 'FAILED' 
+     *      | 'WAITING' 
+     *      | 'OTHER_ERROR',
      *     resultMessage?: string,
      * }
      */
@@ -317,9 +330,27 @@ class NavM2m
 
     /**
      * @return array{
-     *     documentStatus: 'UNDER_PREVALIDATION' | 'PREVALIDATION_ERROR' | 'UNDER_VALIDATION' | 'VALIDATION_ERROR' | 'VALIDATED' | 'UNDER_SUBMIT' | 'SUBMIT_ERROR' | 'SUBMITTED',
+     *     documentStatus: 'UNDER_PREVALIDATION' 
+     *      | 'PREVALIDATION_ERROR' 
+     *      | 'UNDER_VALIDATION' 
+     *      | 'VALIDATION_ERROR' 
+     *      | 'VALIDATED' 
+     *      | 'UNDER_SUBMIT' 
+     *      | 'SUBMIT_ERROR' 
+     *      | 'SUBMITTED',
      *     errors: string,
-     *     resultCode:'CREATE_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'FILE_ID_ALREADY_USED' | 'UNSUCCESSFUL_VALIDATION' | 'INVALID_SENDER' | 'INVALID_TAXPAYER' | 'SENDER_HAS_NO_RIGHT' | 'INVALID_DOCUMENT_TYPE' | 'INVALID_DOCUMENT_VERSION' | 'FILE_CONTAINS_VIRUS' | 'INVALID_SIGNATURE' | 'OTHER_ERROR',
+     *     resultCode: 'CREATE_DOCUMENT_SUCCESS' 
+     *      | 'UNKNOWN_FILE_ID' 
+     *      | 'FILE_ID_ALREADY_USED' 
+     *      | 'UNSUCCESSFUL_VALIDATION' 
+     *      | 'INVALID_SENDER' 
+     *      | 'INVALID_TAXPAYER' 
+     *      | 'SENDER_HAS_NO_RIGHT' 
+     *      | 'INVALID_DOCUMENT_TYPE' 
+     *      | 'INVALID_DOCUMENT_VERSION' 
+     *      | 'FILE_CONTAINS_VIRUS' 
+     *      | 'INVALID_SIGNATURE' 
+     *      | 'OTHER_ERROR',
      *     resultMessage: string,
      * }
      */
@@ -354,8 +385,26 @@ class NavM2m
     /**
      * @return array{
      *     arrivalNumber?: string,
-     *     documentStatus?: 'UNDER_PREVALIDATION' | 'PREVALIDATION_ERROR' | 'UNDER_VALIDATION' | 'VALIDATION_ERROR' | 'VALIDATED' | 'UNDER_SUBMIT' | 'SUBMIT_ERROR' | 'SUBMITTED',
-     *     resultCode: 'UPDATE_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'STATUS_CHANGE_NOT_ENABLED' | 'SUBMIT_ERROR' | 'TOO_BIG_KR_FILE', 'INVALID_SENDER', 'INVALID_TAXPAYER' | 'SENDER_HAS_NO_RIGHT' | 'INVALID_DOCUMENT_TYPE' | 'INVALID_DOCUMENT_VERSION' | 'INVALID_SIGNATURE' | 'OTHER_ERROR',
+     *     documentStatus?: 'UNDER_PREVALIDATION' 
+     *      | 'PREVALIDATION_ERROR' 
+     *      | 'UNDER_VALIDATION' 
+     *      | 'VALIDATION_ERROR' 
+     *      | 'VALIDATED' 
+     *      | 'UNDER_SUBMIT' 
+     *      | 'SUBMIT_ERROR' 
+     *      | 'SUBMITTED',
+     *     resultCode: 'UPDATE_DOCUMENT_SUCCESS' 
+     *      | 'UNKNOWN_FILE_ID' 
+     *      | 'STATUS_CHANGE_NOT_ENABLED' 
+     *      | 'SUBMIT_ERROR' 
+     *      | 'TOO_BIG_KR_FILE' 
+     *      | 'INVALID_SENDER' 
+     *      | 'INVALID_TAXPAYER' 
+     *      | 'SENDER_HAS_NO_RIGHT' 
+     *      | 'INVALID_DOCUMENT_TYPE' 
+     *      | 'INVALID_DOCUMENT_VERSION' 
+     *      | 'INVALID_SIGNATURE' 
+     *      | 'OTHER_ERROR',
      *     resultMessage?: string,
      * }
      */
@@ -388,8 +437,17 @@ class NavM2m
      *     arrivalNumber?: string,
      *     documentFileId?: string,
      *     errors?: string,
-     *     documentStatus?: 'UNDER_PREVALIDATION' | 'PREVALIDATION_ERROR' | 'UNDER_VALIDATION' | 'VALIDATION_ERROR' | 'VALIDATED' | 'UNDER_SUBMIT' | 'SUBMIT_ERROR' | 'SUBMITTED',
-     *     resultCode: 'GET_DOCUMENT_SUCCESS' | 'UNKNOWN_FILE_ID' | 'OTHER_ERROR',
+     *     documentStatus?: 'UNDER_PREVALIDATION' 
+     *      | 'PREVALIDATION_ERROR' 
+     *      | 'UNDER_VALIDATION' 
+     *      | 'VALIDATION_ERROR' 
+     *      | 'VALIDATED' 
+     *      | 'UNDER_SUBMIT' 
+     *      | 'SUBMIT_ERROR' 
+     *      | 'SUBMITTED',
+     *     resultCode: 'GET_DOCUMENT_SUCCESS' 
+     *      | 'UNKNOWN_FILE_ID' 
+     *      | 'OTHER_ERROR',
      *     resultMessage?: string
      * }
      */
@@ -412,7 +470,7 @@ class NavM2m
         $dom = new \DOMDocument();
         $isValid = $dom->load($xmlFile);
 
-        //$isValid = $dom->schemaValidate($schemaFile);
+        //$isValid = $dom->schemaValidate($schemaFile); // TODO see #10
 
         if (!$isValid) {
             $errors = libxml_get_errors();
