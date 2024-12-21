@@ -24,10 +24,15 @@ class NavM2m
         'updateDocument' => 'NavM2mDocument/documentService/Document',
         'userNonce' => 'NavM2mCommon/userregistrationService/Nonce',
     ];
-    public $logger = false;
+    private $logger = false;
+    private $loggerCallback = null;
 
-    public function __construct(string $mode = 'sandbox', array $client, bool $logger = false)
-    {
+    public function __construct(
+        string $mode = 'sandbox',
+        array $client,
+        bool $logger = false,
+        callable $loggerCallback = null
+    ) {
         if (!$client['id'] || !$client['secret']) {
             throw new \Exception("Client ID, client secret, username and password are required");
         }
@@ -37,6 +42,7 @@ class NavM2m
         $this->API_URL = $mode == 'production' ? $this->productionApiUrl : $this->sandboxApiUrl;
 
         $this->logger = $logger;
+        $this->loggerCallback = $loggerCallback;
         $this->log('NavM2m:constructor initialized in ' . $this->mode . ' mode');
     }
 
@@ -522,6 +528,11 @@ class NavM2m
             $message = str_replace('\\', '', $message);
             $message = preg_replace('/"accessToken":"[a-zA-Z0-9+=\/]+"/', '"accessToken":"*ACCESS_TOKEN*"', $message);
             $message = preg_replace('/"Authorization: Bearer [a-zA-Z0-9+=\/]+"/m', '"Authorization: *AUTHORIZATION_TOKEN*"', $message);
+
+            if (is_callable($this->loggerCallback)) {
+                return call_user_func($this->loggerCallback, $message);
+            }
+
             echo date('Y-m-d H:i:s') . ' 👉 ' . $message . "\n";
         }
     }

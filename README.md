@@ -188,11 +188,44 @@ A `$result` hibák kezelésére a `minta.php` fájlban találsz példát.
 
 ### Loggolás
 
-A log kiírja a képernyőre a kéréseket és a válaszokat, ami hasznos lehet a hibakeresés során.
+A log kiírja a standard outputra a kéréseket és a válaszokat, ami hasznos lehet a hibakeresés során.
 A loggolást az objektum létrehozásakor be kapcsolhatod, alapértelmezetten ki van kapcsolva.
 
 ```php
 $navM2m = new NavM2m(mode: 'sandbox', client: $client, logger: true);
+```
+
+Lehetőség van saját logger függvény használatára is. Ebben az esetben a log üzenetek nem a standard outputra íródnak ki, hanem a megadott függvény kapja meg őket:
+
+```php
+// Példa Monolog használatával
+$logger = new Monolog\Logger('nav-m2m');
+$logger->pushHandler(new Monolog\Handler\StreamHandler('nav-m2m.log'));
+
+$loggerCallback = function($message) use ($logger) {
+    $logger->info($message);
+};
+
+$navM2m = new NavM2m(
+    mode: 'sandbox',
+    client: $client,
+    logger: true,
+    loggerCallback: $loggerCallback
+);
+```
+
+```php
+// Példa CakePHP Log használatával
+$loggerCallback = function($message) {
+    \Cake\Log\Log::debug($message, 'nav-m2m');
+};
+
+$navM2m = new NavM2m(
+    mode: 'sandbox',
+    client: $client,
+    logger: true,
+    loggerCallback: $loggerCallback
+);
 ```
 
 ## Támogatás
