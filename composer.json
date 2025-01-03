@@ -2,7 +2,7 @@
   "name": "rrd108/nav-m2m",
   "description": "NAV M2M API integration",
   "type": "library",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "require": {
     "php": ">=8.0",
     "ramsey/uuid": "^4.7",
