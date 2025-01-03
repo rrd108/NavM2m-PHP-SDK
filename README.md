@@ -232,4 +232,4 @@ $navM2m = new NavM2m(
 
 Ha bármilyen kérdésed vagy problémád van, nyiss egy issue-t.
 
-[NAV M2M repo:](https://github.com/nav-gov-hu/M2M)
+[NAV M2M repo](https://github.com/nav-gov-hu/M2M)

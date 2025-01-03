@@ -477,7 +477,7 @@ class NavM2m
         $dom = new \DOMDocument();
         $isValid = $dom->load($xmlFile);
 
-        //$isValid = $dom->schemaValidate($schemaFile); // TODO see #10
+        $isValid = $dom->schemaValidate($schemaFile);
 
         if (!$isValid) {
             $errors = libxml_get_errors();
