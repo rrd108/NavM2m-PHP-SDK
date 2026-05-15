@@ -8,9 +8,9 @@ use Ramsey\Uuid\Uuid;
 
 class NavM2m
 {
-    private $client;
-    private $mode;
-    private $API_URL;
+    private array $client;
+    private string $mode;
+    private string $API_URL;
     private $xsdFile = __DIR__ . '/../resources/schema.xsd';
     private $sandboxApiUrl = 'https://m2m-dev.nav.gov.hu/rest-api/1.1/';
     private $productionApiUrl = 'https://m2m.nav.gov.hu/rest-api/1.1/';
@@ -101,7 +101,27 @@ class NavM2m
         return Uuid::uuid4()->toString();
     }
 
-    protected function sendRequest(string $type, string $endpoint, array $data, string $messageId, string $accessToken = null, string $correlationId = null)
+    private function executeCurl(array $options): array
+    {
+        $ch = curl_init();
+        curl_setopt_array($ch, $options);
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            throw new \Exception("Curl error: " . curl_error($ch));
+        }
+
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            throw new \Exception("HTTP error: {$httpCode} Response: {$response}");
+        }
+
+        return json_decode($response, true);
+    }
+
+    protected function sendRequest(string $type, string $endpoint, array $data, string $messageId, string $accessToken = null, string $correlationId = null): array
     {
         if ($type != 'POST' && $type != 'PATCH') {
             throw new \Exception("Invalid request type: " . $type);
@@ -141,26 +161,12 @@ class NavM2m
             CURLOPT_RETURNTRANSFER => true,
         ];
 
-        $ch = curl_init();
-        curl_setopt_array($ch, $options);
-        $response = curl_exec($ch);
-
-        if (curl_errno($ch)) {
-            throw new \Exception("Curl error: " . curl_error($ch));
-        }
-
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            throw new \Exception("HTTP error: {$httpCode} Response: {$response}");
-        }
-
-        $this->log("  NavM2m:sendRequest Received {$type} response from {$endpoint}: " . $response);
-        return json_decode($response, true);
+        $result = $this->executeCurl($options);
+        $this->log("  NavM2m:sendRequest Received {$type} response from {$endpoint}: " . json_encode($result));
+        return $result;
     }
 
-    protected function get(string $endpoint, string $messageId, string $accessToken = null, string $correlationId = null)
+    protected function get(string $endpoint, string $messageId, string $accessToken = null, string $correlationId = null): array
     {
         $this->log('  NavM2m:get Sending GET request to ' . $endpoint);
 
@@ -183,23 +189,9 @@ class NavM2m
             CURLOPT_RETURNTRANSFER => true
         ];
 
-        $ch = curl_init();
-        curl_setopt_array($ch, $options);
-        $response = curl_exec($ch);
-
-        if (curl_errno($ch)) {
-            throw new \Exception("Curl error: " . curl_error($ch));
-        }
-
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            throw new \Exception("HTTP error: " . $httpCode . " Response: " . $response);
-        }
-
-        $this->log('  NavM2m:get Received GET response from ' . $endpoint . ': ' . $response);
-        return json_decode($response, true);
+        $result = $this->executeCurl($options);
+        $this->log('  NavM2m:get Received GET response from ' . $endpoint . ': ' . json_encode($result));
+        return $result;
     }
 
     /**
@@ -502,7 +494,7 @@ class NavM2m
         );
     }
 
-    protected function isValidXML(string $xmlFile, string $schemaFile)
+    protected function isValidXML(string $xmlFile, string $schemaFile): bool
     {
         libxml_use_internal_errors(true);
 
@@ -540,7 +532,7 @@ class NavM2m
     }
 
 
-    protected function generateSignature(string $messageId, $data, string $signatureKey)
+    protected function generateSignature(string $messageId, string $data, string $signatureKey): string
     {
         $timestamp = $this->getCurrentUTCTimestamp();
         $signatureData = $messageId . $timestamp . $data . $signatureKey;
