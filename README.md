@@ -188,20 +188,35 @@ A `$result` hibák kezelésére a `minta.php` fájlban találsz példát.
 
 #### Egyszerűsített foglalkoztatási adatok lekérdezése
 
-Az SDK támogatja a NAV M2M API `getEgyszerusitettFoglalkoztatas` végpontját, amellyel egyszerűsített foglalkoztatási adatokat kérdezhetsz le.
+##### `getEgyszerusitettFoglalkoztatas`
+
+Egy adott foglalkoztatott egyszerűsített foglalkoztatási adatainak lekérdezése.
 
 ```php
 $result = $navM2m->getEgyszerusitettFoglalkoztatas(
-    taxId: '12345678',                // adószám
+    taxId: '8526552716',              // foglalkoztatott adóazonosító jele (10 számjegy)
     employeeName: 'Kiss Péter',       // foglalkoztatott neve
-    insuredInHungary: 'IGEN',         // foglalkoztatott máshol biztosított-e (IGEN/NEM)
+    insuredInHungary: 'NEM',          // foglalkoztatott máshol biztosított-e (IGEN/NEM)
     signatureKey: $user['signatureKey'],
     accessToken: $token['accessToken'],
-    tajNumber: '123456789'            // opcionális TAJ szám
+    tajNumber: '130708401'            // opcionális TAJ szám (kötelező, ha insuredInHungary=IGEN)
 );
 ```
 
 A `tajNumber` paraméter opcionális. Ha nincs megadva, a lekérdezés TAJ szám nélkül történik.
+
+##### `getEgyszerusitettFoglalkoztatasFoglalkoztatottLista`
+
+Egy adott foglalkoztató (munkáltató) egyszerűsített foglalkoztatotti listájának lekérdezése adott évre.
+
+```php
+$result = $navM2m->getEgyszerusitettFoglalkoztatasFoglalkoztatottLista(
+    employerTaxId: '10278886',        // foglalkoztató adóalany azonosítója
+    targetYear: 2026,                 // tárgyév
+    signatureKey: $user['signatureKey'],
+    accessToken: $token['accessToken'],
+);
+```
 
 ## Loggolás
 
