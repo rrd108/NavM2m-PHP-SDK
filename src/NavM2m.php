@@ -23,6 +23,7 @@ class NavM2m
         'userActivation' => 'NavM2mCommon/userregistrationService/Activation',
         'updateDocument' => 'NavM2mDocument/documentService/Document',
         'userNonce' => 'NavM2mCommon/userregistrationService/Nonce',
+        'getEgyszerusitettFoglalkoztatas' => 'NavM2mAdozo/adozoService/EgyszerusitettFoglalkoztatas',
     ];
     private $logger = false;
     private $loggerCallback = null;
@@ -159,7 +160,7 @@ class NavM2m
         return json_decode($response, true);
     }
 
-    private function get(string $endpoint, string $messageId, string $accessToken = null, string $correlationId = null)
+    protected function get(string $endpoint, string $messageId, string $accessToken = null, string $correlationId = null)
     {
         $this->log('  NavM2m:get Sending GET request to ' . $endpoint);
 
@@ -467,6 +468,37 @@ class NavM2m
             messageId: $this->generateMessageId(),
             accessToken: $accessToken,
             correlationId: $correlationId
+        );
+    }
+
+    public function getEgyszerusitettFoglalkoztatas(
+        string $taxId,
+        string $employeeName,
+        string $insuredInHungary,
+        string $signatureKey,
+        string $accessToken,
+        ?string $tajNumber = null
+    ): array {
+        $messageId = $this->generateMessageId();
+        $signature = $this->generateSignature(
+            messageId: $messageId,
+            data: '',
+            signatureKey: $signatureKey,
+        );
+
+        $url = $this->API_URL . $this->endpoints['getEgyszerusitettFoglalkoztatas'] . '/' . $taxId
+            . '?signature=' . $signature
+            . '&foglalkoztatottNeve=' . urlencode($employeeName)
+            . '&foglalkoztatottMasholBiztositott=' . $insuredInHungary;
+
+        if ($tajNumber !== null) {
+            $url .= '&foglalkoztatottTajSzama=' . $tajNumber;
+        }
+
+        return $this->get(
+            endpoint: $url,
+            messageId: $messageId,
+            accessToken: $accessToken
         );
     }
 

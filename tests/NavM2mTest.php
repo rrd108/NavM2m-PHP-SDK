@@ -66,6 +66,101 @@ class NavM2mTest extends TestCase
     }
 
     #[Test]
+    public function getEgyszerusitettFoglalkoztatasConstructsCorrectUrl(): void
+    {
+        $navM2mMock = $this->getMockBuilder(NavM2m::class)
+            ->setConstructorArgs(['sandbox', self::$client])
+            ->onlyMethods(['get'])
+            ->getMock();
+
+        $taxId = '12345678';
+        $employeeName = 'Kiss Péter';
+        $insuredInHungary = 'IGEN';
+        $signatureKey = 'test-signature-key';
+        $accessToken = 'test-access-token';
+        $tajNumber = '123456789';
+
+        $expectedResponse = ['resultCode' => 'OK'];
+
+        $navM2mMock->expects($this->once())
+            ->method('get')
+            ->with(
+                $this->callback(function ($url) use ($taxId, $employeeName, $insuredInHungary, $tajNumber) {
+                    $prefix = 'https://m2m-dev.nav.gov.hu/rest-api/1.1/NavM2mAdozo/adozoService/EgyszerusitettFoglalkoztatas/';
+
+                    if (strpos($url, $prefix . $taxId . '?signature=') !== 0) {
+                        return false;
+                    }
+
+                    parse_str(parse_url($url, PHP_URL_QUERY), $params);
+
+                    return isset($params['signature'])
+                        && $params['foglalkoztatottNeve'] === $employeeName
+                        && $params['foglalkoztatottMasholBiztositott'] === $insuredInHungary
+                        && $params['foglalkoztatottTajSzama'] === $tajNumber;
+                }),
+                $this->anything(),
+                $this->equalTo($accessToken)
+            )
+            ->willReturn($expectedResponse);
+
+        $result = $navM2mMock->getEgyszerusitettFoglalkoztatas(
+            $taxId,
+            $employeeName,
+            $insuredInHungary,
+            $signatureKey,
+            $accessToken,
+            $tajNumber
+        );
+
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    #[Test]
+    public function getEgyszerusitettFoglalkoztatasWorksWithoutTajNumber(): void
+    {
+        $navM2mMock = $this->getMockBuilder(NavM2m::class)
+            ->setConstructorArgs(['sandbox', self::$client])
+            ->onlyMethods(['get'])
+            ->getMock();
+
+        $taxId = '87654321';
+        $employeeName = 'Nagy Anna';
+        $insuredInHungary = 'NEM';
+        $signatureKey = 'another-signature-key';
+        $accessToken = 'another-access-token';
+
+        $expectedResponse = ['resultCode' => 'OK', 'data' => []];
+
+        $navM2mMock->expects($this->once())
+            ->method('get')
+            ->with(
+                $this->callback(function ($url) use ($taxId, $employeeName, $insuredInHungary) {
+                    parse_str(parse_url($url, PHP_URL_QUERY), $params);
+
+                    return isset($params['signature'])
+                        && $params['foglalkoztatottNeve'] === $employeeName
+                        && $params['foglalkoztatottMasholBiztositott'] === $insuredInHungary
+                        && !isset($params['foglalkoztatottTajSzama']);
+                }),
+                $this->anything(),
+                $this->equalTo($accessToken)
+            )
+            ->willReturn($expectedResponse);
+
+        $result = $navM2mMock->getEgyszerusitettFoglalkoztatas(
+            $taxId,
+            $employeeName,
+            $insuredInHungary,
+            $signatureKey,
+            $accessToken,
+            null
+        );
+
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    #[Test]
     public function testGenerateSignature(): void
     {
         $messageId = '123e4567-e89b-12d3-a456-426614174000';
