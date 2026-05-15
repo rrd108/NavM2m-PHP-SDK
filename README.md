@@ -186,7 +186,24 @@ $result = $navM2m->updateDocument(
 
 A `$result` hibák kezelésére a `minta.php` fájlban találsz példát.
 
-### Loggolás
+#### Egyszerűsített foglalkoztatási adatok lekérdezése
+
+Az SDK támogatja a NAV M2M API `getEgyszerusitettFoglalkoztatas` végpontját, amellyel egyszerűsített foglalkoztatási adatokat kérdezhetsz le.
+
+```php
+$result = $navM2m->getEgyszerusitettFoglalkoztatas(
+    taxId: '12345678',                // adószám
+    employeeName: 'Kiss Péter',       // foglalkoztatott neve
+    insuredInHungary: 'IGEN',         // foglalkoztatott máshol biztosított-e (IGEN/NEM)
+    signatureKey: $user['signatureKey'],
+    accessToken: $token['accessToken'],
+    tajNumber: '123456789'            // opcionális TAJ szám
+);
+```
+
+A `tajNumber` paraméter opcionális. Ha nincs megadva, a lekérdezés TAJ szám nélkül történik.
+
+## Loggolás
 
 A log kiírja a standard outputra a kéréseket és a válaszokat, ami hasznos lehet a hibakeresés során.
 A loggolást az objektum létrehozásakor be kapcsolhatod, alapértelmezetten ki van kapcsolva.
