@@ -14,6 +14,8 @@ class NavM2m
     private $xsdFile = __DIR__ . '/../resources/schema.xsd';
     private $sandboxApiUrl = 'https://m2m-dev.nav.gov.hu/rest-api/1.1/';
     private $productionApiUrl = 'https://m2m.nav.gov.hu/rest-api/1.1/';
+    private $sandboxAdozoApiUrl = 'https://m2m-dev.nav.gov.hu/rest-api/1.0/';
+    private $productionAdozoApiUrl = 'https://m2m.nav.gov.hu/rest-api/1.0/';
     private $endpoints = [
         'addFile' => 'NavM2mCommon/filestoreUploadService/File',
         'createDocument' => 'NavM2mDocument/documentService/Document',
@@ -24,6 +26,7 @@ class NavM2m
         'updateDocument' => 'NavM2mDocument/documentService/Document',
         'userNonce' => 'NavM2mCommon/userregistrationService/Nonce',
         'getEgyszerusitettFoglalkoztatas' => 'NavM2mAdozo/adozoService/EgyszerusitettFoglalkoztatas',
+        'getEgyszerusitettFoglalkoztatasFoglalkoztatottLista' => 'NavM2mAdozo/adozoService/EgyszerusitettFoglalkoztatasFoglalkoztatottLista',
     ];
     private $logger = false;
     private $loggerCallback = null;
@@ -478,7 +481,8 @@ class NavM2m
             signatureKey: $signatureKey,
         );
 
-        $url = $this->API_URL . $this->endpoints['getEgyszerusitettFoglalkoztatas'] . '/' . $taxId
+        $adozoApiUrl = $this->mode === 'production' ? $this->productionAdozoApiUrl : $this->sandboxAdozoApiUrl;
+        $url = $adozoApiUrl . $this->endpoints['getEgyszerusitettFoglalkoztatas'] . '/' . $taxId
             . '?signature=' . $signature
             . '&foglalkoztatottNeve=' . urlencode($employeeName)
             . '&foglalkoztatottMasholBiztositott=' . $insuredInHungary;
@@ -486,6 +490,31 @@ class NavM2m
         if ($tajNumber !== null) {
             $url .= '&foglalkoztatottTajSzama=' . $tajNumber;
         }
+
+        return $this->get(
+            endpoint: $url,
+            messageId: $messageId,
+            accessToken: $accessToken
+        );
+    }
+
+    public function getEgyszerusitettFoglalkoztatasFoglalkoztatottLista(
+        string $employerTaxId,
+        int $targetYear,
+        string $signatureKey,
+        string $accessToken,
+    ): array {
+        $messageId = $this->generateMessageId();
+        $signature = $this->generateSignature(
+            messageId: $messageId,
+            data: '',
+            signatureKey: $signatureKey,
+        );
+
+        $adozoApiUrl = $this->mode === 'production' ? $this->productionAdozoApiUrl : $this->sandboxAdozoApiUrl;
+        $url = $adozoApiUrl . $this->endpoints['getEgyszerusitettFoglalkoztatasFoglalkoztatottLista'] . '/' . $employerTaxId
+            . '?signature=' . $signature
+            . '&targyEv=' . $targetYear;
 
         return $this->get(
             endpoint: $url,

@@ -86,7 +86,7 @@ class NavM2mTest extends TestCase
             ->method('get')
             ->with(
                 $this->callback(function ($url) use ($taxId, $employeeName, $insuredInHungary, $tajNumber) {
-                    $prefix = 'https://m2m-dev.nav.gov.hu/rest-api/1.1/NavM2mAdozo/adozoService/EgyszerusitettFoglalkoztatas/';
+                    $prefix = 'https://m2m-dev.nav.gov.hu/rest-api/1.0/NavM2mAdozo/adozoService/EgyszerusitettFoglalkoztatas/';
 
                     if (strpos($url, $prefix . $taxId . '?signature=') !== 0) {
                         return false;
@@ -158,6 +158,90 @@ class NavM2mTest extends TestCase
         );
 
         $this->assertEquals($expectedResponse, $result);
+    }
+
+    #[Test]
+    public function getEgyszerusitettFoglalkoztatasFoglalkoztatottListaConstructsCorrectUrl(): void
+    {
+        $navM2mMock = $this->getMockBuilder(NavM2m::class)
+            ->setConstructorArgs(['sandbox', self::$client])
+            ->onlyMethods(['get'])
+            ->getMock();
+
+        $employerTaxId = '10278886';
+        $targetYear = 2026;
+        $signatureKey = 'test-signature-key';
+        $accessToken = 'test-access-token';
+
+        $expectedResponse = ['resultCode' => 'SIKERES', 'foglalkoztatott' => [['nev' => 'Test']]];
+
+        $navM2mMock->expects($this->once())
+            ->method('get')
+            ->with(
+                $this->callback(function ($url) use ($employerTaxId, $targetYear) {
+                    $prefix = 'https://m2m-dev.nav.gov.hu/rest-api/1.0/NavM2mAdozo/adozoService/EgyszerusitettFoglalkoztatasFoglalkoztatottLista/';
+
+                    if (strpos($url, $prefix . $employerTaxId . '?signature=') !== 0) {
+                        return false;
+                    }
+
+                    parse_str(parse_url($url, PHP_URL_QUERY), $params);
+
+                    return isset($params['signature'])
+                        && (int)$params['targyEv'] === $targetYear;
+                }),
+                $this->anything(),
+                $this->equalTo($accessToken)
+            )
+            ->willReturn($expectedResponse);
+
+        $result = $navM2mMock->getEgyszerusitettFoglalkoztatasFoglalkoztatottLista(
+            $employerTaxId,
+            $targetYear,
+            $signatureKey,
+            $accessToken,
+        );
+
+        $this->assertEquals($expectedResponse, $result);
+    }
+
+    #[Test]
+    public function getEgyszerusitettFoglalkoztatasFoglalkoztatottListaHandlesEmptyList(): void
+    {
+        $navM2mMock = $this->getMockBuilder(NavM2m::class)
+            ->setConstructorArgs(['sandbox', self::$client])
+            ->onlyMethods(['get'])
+            ->getMock();
+
+        $employerTaxId = '26892920';
+        $targetYear = 2026;
+        $signatureKey = 'another-signature-key';
+        $accessToken = 'another-access-token';
+
+        $expectedResponse = ['resultCode' => 'SIKERES', 'foglalkoztatott' => []];
+
+        $navM2mMock->expects($this->once())
+            ->method('get')
+            ->with(
+                $this->callback(function ($url) use ($employerTaxId, $targetYear) {
+                    parse_str(parse_url($url, PHP_URL_QUERY), $params);
+                    return isset($params['signature'])
+                        && (int)$params['targyEv'] === $targetYear;
+                }),
+                $this->anything(),
+                $this->equalTo($accessToken)
+            )
+            ->willReturn($expectedResponse);
+
+        $result = $navM2mMock->getEgyszerusitettFoglalkoztatasFoglalkoztatottLista(
+            $employerTaxId,
+            $targetYear,
+            $signatureKey,
+            $accessToken,
+        );
+
+        $this->assertEquals($expectedResponse, $result);
+        $this->assertCount(0, $result['foglalkoztatott']);
     }
 
     #[Test]
