@@ -61,9 +61,8 @@ class SandboxIntegrationTest extends TestCase
         $token = $navM2m->createToken($user);
         echo 'Token OK: ' . ($token['resultCode'] ?? 'FAIL') . "\n";
 
-        if (!isset($token['accessToken'])) {
-            $this->fail('Failed to get access token: ' . ($token['resultMessage'] ?? 'unknown error'));
-        }
+        $this->assertArrayHasKey('accessToken', $token, 'Failed to get access token: ' . ($token['resultMessage'] ?? 'unknown error'));
+        $this->assertNotEmpty($token['accessToken'], 'Access token must not be empty');
         $accessToken = $token['accessToken'];
 
         echo "\n--- Step 2: getEgyszerusitettFoglalkoztatas ---\n";
@@ -84,6 +83,7 @@ class SandboxIntegrationTest extends TestCase
                     signatureKey: $user['signatureKey'],
                     accessToken: $accessToken,
                 );
+                $this->assertArrayHasKey('resultCode', $result, "Missing resultCode for {$emp['taxId']}");
                 echo "  {$emp['name']} ({$emp['taxId']}): resultCode={$result['resultCode']}\n";
             } catch (\Exception $e) {
                 echo "  {$emp['name']} ({$emp['taxId']}): FAILED - {$e->getMessage()}\n";
@@ -106,6 +106,7 @@ class SandboxIntegrationTest extends TestCase
                     signatureKey: $user['signatureKey'],
                     accessToken: $accessToken,
                 );
+                $this->assertArrayHasKey('resultCode', $result, "Missing resultCode for employer {$et['taxId']}");
                 $count = count($result['foglalkoztatottak'] ?? []);
                 echo "  Employer {$et['taxId']} year {$et['year']}: resultCode={$result['resultCode']}, foglalkoztatottak={$count} (expected: {$et['expected']})\n";
             } catch (\Exception $e) {
